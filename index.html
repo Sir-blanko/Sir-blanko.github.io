@@ -3,11 +3,12 @@
 <head>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" href="favicon.png">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<title>Nightstand Diary</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Instrument+Sans:wght@400;500;600&display=swap">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nightstand Diary</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Instrument+Sans:wght@400;500;600&display=swap">
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -631,72 +632,95 @@ tr:last-child td{border-bottom:0}
 <script>
 (function(){
   var $=function(id){return document.getElementById(id)};
+
+  /* Supabase Initialization */
+  var supabaseUrl = 'https://uavdcjseikdhmggnwaca.supabase.co';
+  var supabaseKey = 'sb_publishable_xyQjj3yLeF4Pp1hxrNzSXQ_ystdfmtO';
+  var _db = supabase.createClient(supabaseUrl, supabaseKey);
+
   var mem={};
   function sget(k,sess){try{return(sess?sessionStorage:localStorage).getItem(k)}catch(e){return mem[k]||null}}
   function sset(k,v,sess){try{(sess?sessionStorage:localStorage).setItem(k,v)}catch(e){mem[k]=v}}
   function sdel(k,sess){try{(sess?sessionStorage:localStorage).removeItem(k)}catch(e){delete mem[k]}}
 
-  /* Data stores & migration */
-  function getUsers(){
+  /* Supabase Cloud Data Layer */
+  async function getUsers(){
+    var {data,error}=await _db.from('users').select('*');
+    if(error||!data)return{};
     var u={};
-    try{u=JSON.parse(sget("diary:users")||"{}")}catch(e){u={}}
-    var changed=false;
-    Object.keys(u).forEach(function(k){
-      if(!u[k].role){
-        u[k].role=u[k].admin?"admin":"gold";
-        changed=true;
-      }
-      if(typeof u[k].used!=="number"){u[k].used=0;changed=true}
-      if(typeof u[k].max!=="number"){u[k].max=0;changed=true}
-      if(u[k].role==="admin"){u[k].admin=true;u[k].canViewPrivate=true}
+    data.forEach(function(row){
+      u[row.username]={
+        salt:row.salt,
+        hash:row.hash,
+        role:row.role,
+        admin:(row.role==='admin'),
+        max:row.max,
+        used:row.used,
+        canViewPrivate:row.can_view_private
+      };
     });
-    if(changed)sset("diary:users",JSON.stringify(u));
     return u;
   }
-  function saveUsers(u){sset("diary:users",JSON.stringify(u))}
-  function hasAdmin(u){return Object.keys(u).some(function(k){return u[k].role==="admin"||u[k].admin})}
 
-  function getAllEntries(){
-    var all=[];
-    try{
-      var raw=sget("diary:all_entries");
-      if(raw)all=JSON.parse(raw);
-    }catch(e){all=[]}
-    var u=getUsers(),migrated=false;
-    Object.keys(u).forEach(function(uname){
-      var legacyRaw=sget("diary:entries:"+uname);
-      if(legacyRaw){
-        try{
-          var arr=JSON.parse(legacyRaw);
-          if(Array.isArray(arr)){
-            arr.forEach(function(item){
-              if(!all.some(function(x){return x.id===item.id})){
-                all.push({
-                  id:item.id||("e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
-                  author:uname,
-                  date:item.date||today(),
-                  title:item.title||"",
-                  body:item.body||"",
-                  isPublic:!!item.isPublic,
-                  likes:Array.isArray(item.likes)?item.likes:[],
-                  updated:item.updated||Date.now()
-                });
-              }
-            });
-          }
-        }catch(e){}
-        sdel("diary:entries:"+uname);
-        migrated=true;
-      }
+  async function saveUser(uname,acct){
+    await _db.from('users').upsert({
+      username:uname,
+      salt:acct.salt,
+      hash:acct.hash,
+      role:acct.role||(acct.admin?'admin':'gold'),
+      max:acct.max||0,
+      used:acct.used||0,
+      can_view_private:!!acct.canViewPrivate
     });
-    all.forEach(function(e){
-      if(!Array.isArray(e.likes))e.likes=[];
-      if(typeof e.isPublic!=="boolean")e.isPublic=false;
-    });
-    if(migrated)saveAllEntries(all);
-    return all;
   }
-  function saveAllEntries(all){sset("diary:all_entries",JSON.stringify(all))}
+
+  async function deleteUserDb(uname){
+    await _db.from('users').delete().eq('username',uname);
+    await _db.from('entries').delete().eq('author',uname);
+  }
+
+  async function hasAdmin(){
+    var {data}=await _db.from('users').select('username').eq('role','admin');
+    return data&&data.length>0;
+  }
+
+  async function getAllEntries(){
+    var {data,error}=await _db.from('entries').select('*');
+    if(error||!data)return[];
+    return data.map(function(row){
+      return{
+        id:row.id,
+        author:row.author,
+        date:row.date,
+        title:row.title||'',
+        body:row.body||'',
+        isPublic:!!row.is_public,
+        likes:Array.isArray(row.likes)?row.likes:[],
+        updated:row.updated||Date.now()
+      };
+    });
+  }
+
+  async function saveAllEntries(all){
+    if(!Array.isArray(all))return;
+    for(var i=0;i<all.length;i++){
+      var e=all[i];
+      await _db.from('entries').upsert({
+        id:e.id,
+        author:e.author,
+        date:e.date,
+        title:e.title,
+        body:e.body,
+        is_public:!!e.isPublic,
+        likes:e.likes||[],
+        updated:e.updated
+      });
+    }
+  }
+
+  async function deleteEntryDb(id){
+    await _db.from('entries').delete().eq('id',id);
+  }
 
   var me=null,myRole="bronze",cur=null,dirty=false,mode="in",activeFilter="all";
 
@@ -727,13 +751,13 @@ tr:last-child td{border-bottom:0}
     if(!window.crypto||!crypto.subtle){err.textContent="This browser cannot secure passwords. Open the page over HTTPS or localhost.";return}
     $("go").disabled=true;
     try{
-      var u=getUsers();
+      var u=await getUsers();
       if(mode==="setup"){
-        if(hasAdmin(u)){err.textContent="An administrator account already exists. Only one administrator is allowed.";setMode("in");return}
+        if(await hasAdmin()){err.textContent="An administrator account already exists. Only one administrator is allowed.";setMode("in");return}
         if($("pass2").value!==pw){err.textContent="The passwords do not match.";return}
         var salt=b64(crypto.getRandomValues(new Uint8Array(16)));
-        u[name]={salt:salt,hash:await hash(pw,salt),admin:true,role:"admin",max:0,used:0,canViewPrivate:true};
-        saveUsers(u);
+        var newAdmin={salt:salt,hash:await hash(pw,salt),admin:true,role:"admin",max:0,used:0,canViewPrivate:true};
+        await saveUser(name,newAdmin);
       }else{
         if(!u[name]||await hash(pw,u[name].salt)!==u[name].hash){err.textContent="Username or password is incorrect.";return}
         var a=u[name];
@@ -742,15 +766,15 @@ tr:last-child td{border-bottom:0}
           return;
         }
         a.used=(a.used||0)+1;
-        saveUsers(u);
+        await saveUser(name,a);
       }
       sset("diary:session",name,true);
-      enter(name);
+      await enter(name);
     }finally{$("go").disabled=false}
   };
 
-  function enter(name){
-    var u=getUsers(),acct=u[name];
+  async function enter(name){
+    var u=await getUsers(),acct=u[name];
     if(!acct){logout();return}
     me=name;
     myRole=acct.role||(acct.admin?"admin":"gold");
@@ -773,12 +797,10 @@ tr:last-child td{border-bottom:0}
       topTag.title="Bronze User Tag";
     }
 
-    /* Reset search bar state (hidden until user clicks Search) */
     $("q").value="";
     $("search-box-wrap").hidden=true;
     $("nav-search").setAttribute("aria-expanded","false");
 
-    /* Profile & Role setup inside Instagram rail */
     $("avatar-init").textContent=name.slice(0,2).toUpperCase();
     $("hello").textContent=name;
     $("role-text").textContent=myRole==="admin"?"Administrator":(myRole==="gold"?"Gold User":"Bronze User");
@@ -797,13 +819,13 @@ tr:last-child td{border-bottom:0}
     $("app").hidden=false;
 
     cur=null;
-    renderList();
-    var vis=visibleEntries();
-    if(vis.length)open(vis[0].id);
+    await renderList();
+    var vis=await visibleEntries();
+    if(vis.length)await open(vis[0].id);
     else showEmpty();
   }
 
-  function logout(){
+  async function logout(){
     sdel("diary:session",true);
     me=null;cur=null;dirty=false;
     $("q").value="";
@@ -812,12 +834,11 @@ tr:last-child td{border-bottom:0}
     $("nav-rail").classList.remove("expanded");
     $("app").hidden=true;
     $("auth").hidden=false;
-    setMode(hasAdmin(getUsers())?"in":"setup");
+    setMode((await hasAdmin())?"in":"setup");
     $("user").focus();
   }
   $("out").onclick=logout;
 
-  /* Topmost Admin Tag Click */
   $("top-admin-tag").onclick=function(){
     if(myRole==="admin"){
       $("adm").click();
@@ -826,7 +847,6 @@ tr:last-child td{border-bottom:0}
     }
   };
 
-  /* Instagram Rail Navigation & Hover/Touch Expansion */
   var rail=$("nav-rail");
   document.addEventListener("pointerdown",function(e){
     if(rail&&!rail.contains(e.target)){
@@ -852,19 +872,18 @@ tr:last-child td{border-bottom:0}
   ["nav-home","nav-public","nav-mine","nav-liked"].forEach(function(id){
     var btn=$(id);
     if(!btn)return;
-    btn.onclick=function(){
+    btn.onclick=async function(){
       if(!guard())return;
       activeFilter=btn.getAttribute("data-filter");
       updateNavHighlight(id);
-      renderList();
+      await renderList();
       if(!$("admin").hidden||!$("directory").hidden){
-        var vis=visibleEntries();
-        if(vis.length)open(vis[0].id);else showEmpty();
+        var vis=await visibleEntries();
+        if(vis.length)await open(vis[0].id);else showEmpty();
       }
     };
   });
 
-  /* Click Search to toggle/reveal the Search Bar */
   $("nav-search").onclick=function(){
     var wrap=$("search-box-wrap");
     var isHidden=wrap.hidden;
@@ -881,20 +900,20 @@ tr:last-child td{border-bottom:0}
     }
   };
 
-  $("q-clear").onclick=function(){
+  $("q-clear").onclick=async function(){
     $("q").value="";
     $("search-box-wrap").hidden=true;
     $("nav-search").setAttribute("aria-expanded","false");
-    renderList();
+    await renderList();
   };
 
-  /* Access Control & Entries */
-  function canReadEntry(entry){
+  async function canReadEntry(entry){
     if(myRole==="admin")return true;
     if(entry.author===me)return true;
     if(entry.isPublic)return true;
-    var u=getUsers()[me];
-    if(u&&u.canViewPrivate)return true;
+    var u=await getUsers();
+    var acct=u[me];
+    if(acct&&acct.canViewPrivate)return true;
     return false;
   }
 
@@ -905,9 +924,13 @@ tr:last-child td{border-bottom:0}
     return false;
   }
 
-  function visibleEntries(){
-    var all=getAllEntries();
-    return all.filter(canReadEntry).sort(function(a,b){
+  async function visibleEntries(){
+    var all=await getAllEntries();
+    var res=[];
+    for(var i=0;i<all.length;i++){
+      if(await canReadEntry(all[i]))res.push(all[i]);
+    }
+    return res.sort(function(a,b){
       return b.date.localeCompare(a.date)||b.updated-a.updated;
     });
   }
@@ -934,10 +957,10 @@ tr:last-child td{border-bottom:0}
     $("none").hidden=false;
   }
 
-  function renderList(){
+  async function renderList(){
     var q=$("q").value.trim().toLowerCase(),ul=$("list");
     ul.innerHTML="";
-    var vis=visibleEntries();
+    var vis=await visibleEntries();
     var rows=vis.filter(function(e){
       if(activeFilter==="mine"&&e.author!==me)return false;
       if(activeFilter==="public"&&!e.isPublic)return false;
@@ -946,7 +969,7 @@ tr:last-child td{border-bottom:0}
       return true;
     });
 
-    var au=me&&getUsers()[me],info="";
+    var u=await getUsers(),au=me&&u[me],info="";
     if(au&&myRole!=="admin"&&au.max>0){
       var left=Math.max(0,au.max-(au.used||0));
       info=left>0
@@ -988,7 +1011,7 @@ tr:last-child td{border-bottom:0}
 
       b.append(top,t,sub);
       if(e.id===cur)b.setAttribute("aria-current","true");
-      b.onclick=function(){if(guard())open(e.id)};
+      b.onclick=async function(){if(guard())await open(e.id)};
       li.appendChild(b);
       ul.appendChild(li);
     });
@@ -999,10 +1022,10 @@ tr:last-child td{border-bottom:0}
     return window.confirm("You have unsaved changes. Discard them and switch views?");
   }
 
-  function open(id){
-    var all=getAllEntries();
+  async function open(id){
+    var all=await getAllEntries();
     var e=all.filter(function(x){return x.id===id})[0];
-    if(!e||!canReadEntry(e))return;
+    if(!e||!(await canReadEntry(e)))return;
     cur=id;
     dirty=false;
     hideAllViews();
@@ -1032,7 +1055,7 @@ tr:last-child td{border-bottom:0}
         :"Read-only entry";
       $("reader").hidden=false;
     }
-    renderList();
+    await renderList();
   }
 
   function updateEditorLike(e){
@@ -1050,19 +1073,19 @@ tr:last-child td{border-bottom:0}
     $("r-like-count").textContent=likes.length;
   }
 
-  function toggleLike(){
+  async function toggleLike(){
     if(!cur||!me)return;
-    var all=getAllEntries();
+    var all=await getAllEntries();
     var e=all.filter(function(x){return x.id===cur})[0];
-    if(!e||!canReadEntry(e))return;
+    if(!e||!(await canReadEntry(e)))return;
     if(!Array.isArray(e.likes))e.likes=[];
     var idx=e.likes.indexOf(me);
     if(idx>-1)e.likes.splice(idx,1);
     else e.likes.push(me);
-    saveAllEntries(all);
+    await saveAllEntries(all);
     if(!$("editor").hidden)updateEditorLike(e);
     if(!$("reader").hidden)updateReaderLike(e);
-    renderList();
+    await renderList();
   }
   $("ed-like").onclick=toggleLike;
   $("r-like").onclick=toggleLike;
@@ -1086,10 +1109,10 @@ tr:last-child td{border-bottom:0}
     $("status").textContent="Unsaved changes";
   });
 
-  $("new").onclick=function(){
+  $("new").onclick=async function(){
     if(myRole==="bronze")return;
     if(!guard())return;
-    var all=getAllEntries();
+    var all=await getAllEntries();
     var e={
       id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       author:me,
@@ -1101,15 +1124,15 @@ tr:last-child td{border-bottom:0}
       updated:Date.now()
     };
     all.push(e);
-    saveAllEntries(all);
+    await saveAllEntries(all);
     activeFilter="all";
     updateNavHighlight("nav-home");
-    open(e.id);
+    await open(e.id);
     $("title").focus();
   };
 
-  $("save").onclick=function(){
-    var all=getAllEntries();
+  $("save").onclick=async function(){
+    var all=await getAllEntries();
     var e=all.filter(function(x){return x.id===cur})[0];
     if(!e||!canEditEntry(e))return;
     e.date=$("date").value||today();
@@ -1117,14 +1140,14 @@ tr:last-child td{border-bottom:0}
     e.body=$("body").value;
     e.isPublic=$("is-public").checked;
     e.updated=Date.now();
-    saveAllEntries(all);
+    await saveAllEntries(all);
     dirty=false;
     $("status").textContent="Saved";
-    renderList();
+    await renderList();
   };
 
   var armed=false;
-  $("del").onclick=function(){
+  $("del").onclick=async function(){
     if(!armed){
       armed=true;
       $("del").textContent="Click again to delete";
@@ -1132,34 +1155,23 @@ tr:last-child td{border-bottom:0}
       return;
     }
     armed=false;
-    var all=getAllEntries().filter(function(x){return x.id!==cur});
-    saveAllEntries(all);
+    await deleteEntryDb(cur);
     cur=null;dirty=false;
-    renderList();
-    var vis=visibleEntries();
-    if(vis.length)open(vis[0].id);else showEmpty();
+    await renderList();
+    var vis=await visibleEntries();
+    if(vis.length)await open(vis[0].id);else showEmpty();
   };
 
   $("q").oninput=renderList;
-  document.addEventListener("keydown",function(e){
+  document.addEventListener("keydown",async function(e){
     if((e.ctrlKey||e.metaKey)&&e.key==="s"&&me&&cur&&!$("editor").hidden){
       e.preventDefault();
       $("save").click();
     }
   });
 
-  /* Admin Account Management (Only visible to Admin) */
-  function removeUser(n){
-    var x=getUsers();
-    if(!x[n]||x[n].role==="admin")return;
-    delete x[n];
-    saveUsers(x);
-    var remaining=getAllEntries().filter(function(e){return e.author!==n});
-    saveAllEntries(remaining);
-  }
-
-  function renderUsers(){
-    var tbody=$("ulist"),u=getUsers();
+  async function renderUsers(){
+    var tbody=$("ulist"),u=await getUsers();
     tbody.innerHTML="";
     var names=Object.keys(u).sort(function(a,b){
       if(u[a].role==="admin")return -1;
@@ -1210,11 +1222,11 @@ tr:last-child td{border-bottom:0}
         cb.type="checkbox";
         cb.checked=!!acct.canViewPrivate;
         cb.style.accentColor="var(--accent)";
-        cb.onchange=function(){
-          var latest=getUsers();
+        cb.onchange=async function(){
+          var latest=await getUsers();
           if(latest[n]){
             latest[n].canViewPrivate=cb.checked;
-            saveUsers(latest);
+            await saveUser(n,latest[n]);
           }
         };
         var txt=document.createElement("span");
@@ -1229,16 +1241,16 @@ tr:last-child td{border-bottom:0}
         var remBtn=document.createElement("button"),armedU=false;
         remBtn.className="btn danger sm";
         remBtn.textContent="Remove";
-        remBtn.onclick=function(){
+        remBtn.onclick=async function(){
           if(!armedU){
             armedU=true;
             remBtn.textContent="Confirm remove";
             setTimeout(function(){armedU=false;if(remBtn)remBtn.textContent="Remove"},3000);
             return;
           }
-          removeUser(n);
-          renderUsers();
-          renderList();
+          await deleteUserDb(n);
+          await renderUsers();
+          await renderList();
         };
         tdAct.appendChild(remBtn);
       }else{
@@ -1250,21 +1262,21 @@ tr:last-child td{border-bottom:0}
     });
   }
 
-  $("adm").onclick=function(){
+  $("adm").onclick=async function(){
     if(myRole!=="admin")return;
     if(!guard())return;
     hideAllViews();
     updateNavHighlight("adm");
     $("admin").hidden=false;
     $("aerr").textContent="";
-    renderUsers();
+    await renderUsers();
     $("nu").focus();
   };
 
-  $("aback").onclick=function(){
+  $("aback").onclick=async function(){
     updateNavHighlight("nav-home");
-    var vis=visibleEntries();
-    if(vis.length)open(vis[0].id);else showEmpty();
+    var vis=await visibleEntries();
+    if(vis.length)await open(vis[0].id);else showEmpty();
   };
 
   $("mk").onclick=async function(){
@@ -1276,7 +1288,7 @@ tr:last-child td{border-bottom:0}
     if(pw.length<8){err.textContent="Use a password with at least 8 characters.";return}
     if(role!=="gold"&&role!=="bronze"){err.textContent="Select a valid account level (Gold or Bronze).";return}
 
-    var u=getUsers();
+    var u=await getUsers();
     if(u[name]&&(u[name].role==="admin"||u[name].admin)){
       err.textContent="Only one administrator account is allowed and it cannot be overwritten here.";
       return;
@@ -1288,7 +1300,7 @@ tr:last-child td{border-bottom:0}
     }
 
     var existed=!!u[name],salt=b64(crypto.getRandomValues(new Uint8Array(16)));
-    u[name]={
+    var newAcct={
       salt:salt,
       hash:await hash(pw,salt),
       admin:false,
@@ -1297,18 +1309,17 @@ tr:last-child td{border-bottom:0}
       used:0,
       canViewPrivate:canPriv
     };
-    saveUsers(u);
+    await saveUser(name,newAcct);
     $("nu").value="";$("np").value="";$("nl").value="";$("npriv").checked=false;
     err.style.color="var(--accent)";
     err.textContent=existed
       ?"Updated "+name+" ("+role+" user, access counter reset)."
       :"Created "+role+" user account for "+name+".";
-    renderUsers();
+    await renderUsers();
   };
 
-  /* Gold User Directory (Read-only) */
-  function renderDirectory(){
-    var tbody=$("dlist"),u=getUsers(),all=getAllEntries();
+  async function renderDirectory(){
+    var tbody=$("dlist"),u=await getUsers(),all=await getAllEntries();
     tbody.innerHTML="";
     Object.keys(u).sort().forEach(function(n){
       var acct=u[n],role=acct.role||(acct.admin?"admin":"gold");
@@ -1321,18 +1332,18 @@ tr:last-child td{border-bottom:0}
     });
   }
 
-  $("dir-btn").onclick=function(){
+  $("dir-btn").onclick=async function(){
     if(myRole!=="gold")return;
     if(!guard())return;
     hideAllViews();
     updateNavHighlight("dir-btn");
     $("directory").hidden=false;
-    renderDirectory();
+    await renderDirectory();
   };
-  $("dback").onclick=function(){
+  $("dback").onclick=async function(){
     updateNavHighlight("nav-home");
-    var vis=visibleEntries();
-    if(vis.length)open(vis[0].id);else showEmpty();
+    var vis=await visibleEntries();
+    if(vis.length)await open(vis[0].id);else showEmpty();
   };
 
   function escapeHtml(str){
@@ -1342,12 +1353,16 @@ tr:last-child td{border-bottom:0}
   }
 
   /* Startup */
-  var s=sget("diary:session",true);
-  if(s&&getUsers()[s])enter(s);
-  else{
-    $("auth").hidden=false;
-    setMode(hasAdmin(getUsers())?"in":"setup");
-  }
+  (async function(){
+    var s=sget("diary:session",true);
+    var u=await getUsers();
+    if(s&&u[s]){
+      await enter(s);
+    }else{
+      $("auth").hidden=false;
+      setMode((await hasAdmin())?"in":"setup");
+    }
+  })();
 })();
 </script>
 </body>

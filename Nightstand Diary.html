@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nightstand Diary</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1f0;--surface:#fbfcfb;--ink:#17232d;--muted:#5d6b75;--line:#d3dad8;--accent:#2f5d62;--accent-ink:#ffffff;--danger:#a23b3b;--sel:#e0e9e7;
+  --gold:#9a741c;--gold-bg:#f8f3e3;--bronze:#8a4f2d;--bronze-bg:#f6ebe4;--admin-bg:#e3eceb;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;--sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --rail-collapsed:72px;--rail-expanded:300px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10181e;--surface:#17222a;--ink:#e6ecea;--muted:#92a2aa;--line:#2a3943;--accent:#7fb8bd;--accent-ink:#0c1418;--danger:#e08a8a;--sel:#203039;
+  --gold:#e2bd6b;--gold-bg:#2a2415;--bronze:#d89770;--bronze-bg:#2a1d16;--admin-bg:#1c2e33;
+}}
+:root[data-theme="dark"]{
+  --bg:#10181e;--surface:#17222a;--ink:#e6ecea;--muted:#92a2aa;--line:#2a3943;--accent:#7fb8bd;--accent-ink:#0c1418;--danger:#e08a8a;--sel:#203039;
+  --gold:#e2bd6b;--gold-bg:#2a2415;--bronze:#d89770;--bronze-bg:#2a1d16;--admin-bg:#1c2e33;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:.55rem 1.05rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;transition:opacity .15s}
+.btn:hover:not(:disabled){opacity:.92}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover:not(:disabled){background:var(--sel);opacity:1}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+.btn.danger:hover:not(:disabled){background:rgba(162,59,59,.08);opacity:1}
+.btn.sm{padding:.35rem .7rem;font-size:.85rem}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .55rem;border-radius:999px;font-size:.75rem;font-weight:600;letter-spacing:.02em;text-transform:capitalize}
+.badge.admin{background:var(--admin-bg);color:var(--accent);border:1px solid var(--line)}
+.badge.gold{background:var(--gold-bg);color:var(--gold);border:1px solid rgba(154,116,28,.25)}
+.badge.bronze{background:var(--bronze-bg);color:var(--bronze);border:1px solid rgba(138,79,45,.25)}
+.badge.public{background:var(--sel);color:var(--accent)}
+.badge.private{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.badge.expired{background:rgba(162,59,59,.12);color:var(--danger);border:1px solid rgba(162,59,59,.3)}
+
+/* Login / Auth */
+#auth{min-height:100vh;display:grid;place-items:center;padding:1.5rem}
+.card{width:100%;max-width:410px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:2rem}
+.brand{font:600 2rem/1.1 var(--serif);margin:0 0 .4rem}
+.lede{font:italic 1.05rem/1.4 var(--serif);color:var(--muted);margin:0 0 1.5rem}
+label{display:block;font-size:.9rem;font-weight:500;margin:0 0 .3rem}
+.field{margin-bottom:1rem}
+input[type=text],input[type=password],input[type=date],input[type=search],input[type=number],select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:.58rem .75rem}
+.err{color:var(--danger);font-size:.9rem;min-height:1.3rem;margin:0 0 .75rem}
+.note{color:var(--muted);font-size:.82rem;margin:1.25rem 0 0;line-height:1.45}
+
+/* App Layout with Instagram-style Auto-Expanding Left Navigation Rail */
+#app{min-height:100vh;padding-left:var(--rail-collapsed)}
+
+aside#nav-rail{
+  position:fixed;
+  top:0;
+  left:0;
+  bottom:0;
+  width:var(--rail-collapsed);
+  background:var(--surface);
+  border-right:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+  z-index:100;
+  overflow:hidden;
+  transition:width .24s cubic-bezier(.22,1,.36,1),box-shadow .24s ease;
+  padding:.85rem .65rem;
+}
+aside#nav-rail:hover,
+aside#nav-rail:focus-within,
+aside#nav-rail.expanded{
+  width:var(--rail-expanded);
+  box-shadow:8px 0 28px rgba(0,0,0,.09);
+}
+
+/* Top Admin Tag / Role Banner */
+.rail-top-tag{
+  display:flex;
+  align-items:center;
+  gap:.85rem;
+  min-height:46px;
+  padding:.35rem .6rem;
+  margin-bottom:.65rem;
+  border-radius:10px;
+  background:var(--admin-bg);
+  border:1px solid var(--line);
+  color:var(--accent);
+  flex-shrink:0;
+  cursor:pointer;
+  text-align:left;
+  width:100%;
+  transition:background .15s ease,transform .12s ease;
+}
+.rail-top-tag:hover{background:var(--sel)}
+.rail-top-tag:active{transform:scale(.98)}
+.rail-top-tag.role-gold{background:var(--gold-bg);color:var(--gold);border-color:rgba(154,116,28,.25);cursor:default}
+.rail-top-tag.role-bronze{background:var(--bronze-bg);color:var(--bronze);border-color:rgba(138,79,45,.25);cursor:default}
+.rail-top-tag svg{
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.rail-tag-info{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  opacity:0;
+  transform:translateX(-6px);
+  transition:opacity .18s ease,transform .18s ease;
+}
+aside#nav-rail:hover .rail-tag-info,
+aside#nav-rail:focus-within .rail-tag-info,
+aside#nav-rail.expanded .rail-tag-info{
+  opacity:1;
+  transform:translateX(0);
+}
+.rail-tag-title{
+  font-size:.82rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.rail-tag-sub{
+  font-size:.74rem;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Instagram-like Icon + Label Navigation Stack */
+.ig-menu{
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+  flex-shrink:0;
+}
+.ig-item{
+  display:flex;
+  align-items:center;
+  gap:.95rem;
+  width:100%;
+  height:46px;
+  padding:0 .65rem;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+  text-align:left;
+  transition:background .15s ease,transform .12s ease;
+  position:relative;
+  flex-shrink:0;
+}
+.ig-item:hover{background:var(--sel)}
+.ig-item:active{transform:scale(.98)}
+.ig-item[aria-current="true"]{background:var(--sel);font-weight:600}
+.ig-item[aria-current="true"] svg{color:var(--accent)}
+.ig-item svg{
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  transition:transform .16s ease;
+}
+.ig-item:hover svg{transform:scale(1.06)}
+.ig-label{
+  font-size:.95rem;
+  white-space:nowrap;
+  opacity:0;
+  transform:translateX(-6px);
+  transition:opacity .18s ease,transform .18s ease;
+  pointer-events:none;
+}
+aside#nav-rail:hover .ig-label,
+aside#nav-rail:focus-within .ig-label,
+aside#nav-rail.expanded .ig-label{
+  opacity:1;
+  transform:translateX(0);
+}
+
+/* Search Input Drawer (Revealed ONLY when user clicks Search) */
+.search-box-wrap{
+  padding:.25rem .35rem .5rem;
+  opacity:0;
+  transform:translateX(-6px);
+  transition:opacity .18s ease,transform .18s ease;
+}
+aside#nav-rail:hover .search-box-wrap,
+aside#nav-rail:focus-within .search-box-wrap,
+aside#nav-rail.expanded .search-box-wrap{
+  opacity:1;
+  transform:translateX(0);
+}
+.search-input-row{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+#q{
+  padding:.48rem 2rem .48rem .65rem;
+  font-size:.88rem;
+  margin:0;
+}
+.search-clear{
+  position:absolute;
+  right:.45rem;
+  background:none;
+  border:0;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:1rem;
+  line-height:1;
+  padding:.2rem;
+  border-radius:4px;
+}
+.search-clear:hover{color:var(--ink);background:var(--sel)}
+
+/* Profile Avatar Circle inside Rail */
+.ig-avatar{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:var(--accent);
+  color:var(--accent-ink);
+  font-size:.78rem;
+  font-weight:600;
+  display:grid;
+  place-items:center;
+  text-transform:uppercase;
+  flex-shrink:0;
+  border:1.5px solid var(--line);
+}
+.ig-profile-info{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  opacity:0;
+  transform:translateX(-6px);
+  transition:opacity .18s ease,transform .18s ease;
+}
+aside#nav-rail:hover .ig-profile-info,
+aside#nav-rail:focus-within .ig-profile-info,
+aside#nav-rail.expanded .ig-profile-info{
+  opacity:1;
+  transform:translateX(0);
+}
+.ig-profile-name{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ig-profile-sub{font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Expandable Drawer Section (Entries List) - hidden when rail is collapsed */
+.rail-drawer{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:0;
+  margin-top:.55rem;
+  padding-top:.55rem;
+  border-top:1px solid var(--line);
+  opacity:0;
+  visibility:hidden;
+  transform:translateX(-8px);
+  transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s;
+}
+aside#nav-rail:hover .rail-drawer,
+aside#nav-rail:focus-within .rail-drawer,
+aside#nav-rail.expanded .rail-drawer{
+  opacity:1;
+  visibility:visible;
+  transform:translateX(0);
+  transition:opacity .22s ease .04s,transform .22s ease .04s,visibility 0s linear 0s;
+}
+.drawer-meta{
+  font-size:.76rem;
+  color:var(--muted);
+  padding:0 .35rem .45rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#list{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1}
+#list li + li{margin-top:.15rem}
+#list button{width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:.55rem .65rem;cursor:pointer;display:block}
+#list button:hover{background:rgba(47,93,98,.07)}
+#list button[aria-current="true"]{background:var(--sel)}
+#list .meta-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem;font-size:.74rem;color:var(--muted);margin-bottom:.12rem}
+#list .t{display:block;font:600 1rem var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#list .sub-meta{display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:.18rem}
+.empty{color:var(--muted);padding:.75rem .5rem;font-size:.88rem}
+
+/* Bottom Rail Actions (Sign out) */
+.ig-bottom{
+  margin-top:auto;
+  padding-top:.5rem;
+  border-top:1px solid var(--line);
+  flex-shrink:0;
+}
+
+/* Main Content */
+main{padding:2rem clamp(1.25rem,5vw,4rem);max-width:880px;width:100%;margin:0 auto}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.section-head h2{font:600 1.8rem var(--serif);margin:0 0 .2rem}
+
+/* Editor & Reader */
+.date-row{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem}
+.date-controls{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap}
+.date-row input[type=date]{width:auto}
+.vis-toggle{display:inline-flex;align-items:center;gap:.45rem;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.45rem .75rem;font-size:.88rem;cursor:pointer;user-select:none}
+.vis-toggle input{accent-color:var(--accent);width:1rem;height:1rem;margin:0}
+#title{width:100%;border:0;background:none;font:600 clamp(1.7rem,4vw,2.35rem)/1.2 var(--serif);padding:.25rem 0;border-bottom:1px solid var(--line);margin-bottom:1rem}
+#title:focus-visible{outline:none;border-color:var(--accent)}
+#body{width:100%;min-height:48vh;resize:vertical;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:1.25rem;font:1.15rem/1.75 var(--serif)}
+.foot{display:flex;gap:.75rem;align-items:center;margin-top:1rem;flex-wrap:wrap}
+.foot .sp{flex:1}
+.status{color:var(--muted);font-size:.85rem}
+
+/* Read-only Diary View */
+.reader-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(1.25rem,3vw,2.25rem)}
+.reader-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;color:var(--muted);font-size:.88rem;margin-bottom:.65rem}
+.reader-title{font:600 clamp(1.7rem,4vw,2.3rem)/1.2 var(--serif);margin:0 0 1.25rem;padding-bottom:.85rem;border-bottom:1px solid var(--line)}
+.reader-body{font:1.15rem/1.8 var(--serif);white-space:pre-wrap;word-break:break-word;margin:0 0 1.75rem;min-height:18vh}
+.reader-foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-top:1rem;border-top:1px solid var(--line);flex-wrap:wrap}
+.like-btn{display:inline-flex;align-items:center;gap:.45rem;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:.45rem 1rem;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .15s}
+.like-btn:hover:not(:disabled){border-color:var(--accent)}
+.like-btn[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent);font-weight:600}
+.like-btn:disabled{opacity:.65;cursor:default}
+
+/* Admin & Directory Tables */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+.adm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:.92rem}
+th,td{padding:.75rem 1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:var(--bg);font-weight:600;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+tr:last-child td{border-bottom:0}
+.usage-bar{width:100%;max-width:120px;height:6px;background:var(--bg);border-radius:999px;overflow:hidden;margin-top:.3rem;border:1px solid var(--line)}
+.usage-fill{height:100%;background:var(--accent);border-radius:999px}
+.usage-fill.warn{background:var(--gold)}
+.usage-fill.full{background:var(--danger)}
+.role-guide{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+.role-box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.85rem 1rem;font-size:.84rem}
+.role-box strong{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;font-size:.9rem}
+.role-box p{margin:0;color:var(--muted);line-height:1.4}
+
+@media (max-width:760px){
+  :root{--rail-collapsed:60px;--rail-expanded:275px}
+  .adm-grid,.role-guide{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<section id="auth" hidden>
+  <div class="card">
+    <h1 class="brand">Nightstand Diary</h1>
+    <p class="lede">A private place for today’s thoughts.</p>
+    <p id="sub" style="font-weight:600;margin:0 0 1rem">Sign in</p>
+    <div class="field"><label for="user">Username</label><input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+    <div class="field"><label for="pass">Password</label><input id="pass" type="password" autocomplete="current-password"></div>
+    <div class="field" id="confirm-wrap" hidden><label for="pass2">Confirm password</label><input id="pass2" type="password" autocomplete="new-password"></div>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn" id="go" style="width:100%">Sign in</button>
+    <p class="note">Accounts are created by the administrator. If your access limit has been reached, please request a new account from the administrator.</p>
+  </div>
+</section>
+
+<section id="app" hidden>
+  <!-- Instagram-style Hover-Expanding Left Navigation Rail -->
+  <aside id="nav-rail" aria-label="Primary navigation">
+    <!-- 1. Topmost: Admin Tag (or Active Role Tag) -->
+    <button type="button" class="rail-top-tag" id="top-admin-tag" title="Admin Tag">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"></path>
+      </svg>
+      <div class="rail-tag-info">
+        <span class="rail-tag-title" id="top-tag-title">ADMIN</span>
+        <span class="rail-tag-sub" id="top-tag-sub">Nightstand Diary</span>
+      </div>
+    </button>
+
+    <nav class="ig-menu">
+      <!-- 2. Second: Search Button + Click-to-Reveal Search Bar -->
+      <button type="button" class="ig-item" id="nav-search" aria-expanded="false" aria-controls="search-box-wrap" title="Search entries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="20" y1="20" x2="16.2" y2="16.2"></line></svg>
+        <span class="ig-label">Search</span>
+      </button>
+
+      <div class="search-box-wrap" id="search-box-wrap" hidden>
+        <div class="search-input-row">
+          <input type="search" id="q" placeholder="Search entries…" aria-label="Search entries">
+          <button type="button" class="search-clear" id="q-clear" title="Close search" aria-label="Close search">×</button>
+        </div>
+      </div>
+
+      <!-- Home / All Visible Entries -->
+      <button type="button" class="ig-item" id="nav-home" data-filter="all" aria-current="true" title="All visible entries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>
+        <span class="ig-label">Home (All)</span>
+      </button>
+
+      <!-- Public Feed -->
+      <button type="button" class="ig-item" id="nav-public" data-filter="public" title="Public entries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+        <span class="ig-label">Public Diaries</span>
+      </button>
+
+      <!-- My Entries -->
+      <button type="button" class="ig-item" id="nav-mine" data-filter="mine" title="My entries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <span class="ig-label">My Entries</span>
+      </button>
+
+      <!-- Liked Entries -->
+      <button type="button" class="ig-item" id="nav-liked" data-filter="liked" title="Liked entries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        <span class="ig-label">Liked</span>
+      </button>
+
+      <!-- Create Entry (Plus) -->
+      <button type="button" class="ig-item" id="new" title="New entry">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span class="ig-label">Create Entry</span>
+      </button>
+
+      <!-- User Profile / Role Badge -->
+      <div class="ig-item" id="nav-profile" style="cursor:default" title="Signed in profile">
+        <span class="ig-avatar" id="avatar-init">U</span>
+        <div class="ig-profile-info">
+          <span class="ig-profile-name" id="hello">Diary</span>
+          <span class="ig-profile-sub" id="role-text">User</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Expandable Entries Drawer (Appears smoothly on hover / focus) -->
+    <div class="rail-drawer">
+      <div class="drawer-meta" id="count"></div>
+      <ul id="list"></ul>
+    </div>
+
+    <!-- Bottom Controls (Manage Accounts / View Users + Sign out) -->
+    <div class="ig-bottom">
+      <button type="button" class="ig-item" id="adm" hidden title="Manage accounts (Admin)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="6" rx="1"></rect><rect x="4" y="15" width="6" height="6" rx="1"></rect><rect x="14" y="15" width="6" height="6" rx="1"></rect></svg>
+        <span class="ig-label">Manage Accounts</span>
+      </button>
+
+      <button type="button" class="ig-item" id="dir-btn" hidden title="View registered users">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="6" rx="1"></rect><rect x="4" y="15" width="6" height="6" rx="1"></rect><rect x="14" y="15" width="6" height="6" rx="1"></rect></svg>
+        <span class="ig-label">View Users</span>
+      </button>
+
+      <button type="button" class="ig-item" id="out" title="Sign out">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+        <span class="ig-label">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Admin Account Management -->
+    <section id="admin" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Account Administration</h2>
+          <p class="status" style="margin:0">Create accounts, assign access levels, and monitor how many times each account has been used.</p>
+        </div>
+        <button class="btn ghost" id="aback">Back to diary</button>
+      </div>
+
+      <div class="role-guide">
+        <div class="role-box">
+          <strong>1. Administrator <span class="badge admin">Admin</span></strong>
+          <p>Single admin account. Creates &amp; removes users, sets access limits &amp; levels, and can view all private and public diaries.</p>
+        </div>
+        <div class="role-box">
+          <strong>2. Gold User <span class="badge gold">Gold</span></strong>
+          <p>Can write personal &amp; public diary entries, read public diaries, like entries, and view registered users (cannot add/remove users).</p>
+        </div>
+        <div class="role-box">
+          <strong>3. Bronze User <span class="badge bronze">Bronze</span></strong>
+          <p>Read-only access to public diary entries (plus any private diaries explicitly permitted by the admin) and can like entries.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="font:600 1.2rem var(--serif);margin:0 0 1rem">Create or Update User Account</h3>
+        <div class="adm-grid">
+          <div class="field">
+            <label for="nu">Username</label>
+            <input id="nu" type="text" placeholder="e.g. clara.m" autocapitalize="none" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="np">Password (min 8 characters)</label>
+            <input id="np" type="password" autocomplete="new-password" placeholder="••••••••">
+          </div>
+          <div class="field">
+            <label for="nrole">Account Level (Max Access)</label>
+            <select id="nrole">
+              <option value="gold">Gold User (Write entries, like &amp; view users)</option>
+              <option value="bronze">Bronze User (Read public entries &amp; like)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="nl">Max Access Times (Sign-in limit)</label>
+            <input id="nl" type="number" min="1" max="1000" placeholder="Leave blank for unlimited">
+          </div>
+        </div>
+        <div class="field" style="margin-top:.25rem">
+          <label class="vis-toggle" style="display:inline-flex">
+            <input type="checkbox" id="npriv">
+            <span>Allow viewing private diaries from other users</span>
+          </label>
+        </div>
+        <p class="err" id="aerr" role="alert"></p>
+        <div class="foot" style="margin-top:0">
+          <button class="btn" id="mk">Save account</button>
+        </div>
+      </div>
+
+      <h3 style="font:600 1.35rem var(--serif);margin:0 0 .75rem">Created Accounts &amp; Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Account Level</th>
+              <th>Access Usage</th>
+              <th>Diary Visibility</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="ulist"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Gold User Read-Only Directory -->
+    <section id="directory" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Registered Users</h2>
+          <p class="status" style="margin:0">Community member directory (Gold access view).</p>
+        </div>
+        <button class="btn ghost" id="dback">Back to diary</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Account Level</th>
+              <th>Public Entries</th>
+            </tr>
+          </thead>
+          <tbody id="dlist"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Entry Editor (Author / Admin) -->
+    <div id="editor" hidden>
+      <div class="date-row">
+        <div class="date-controls">
+          <input type="date" id="date" aria-label="Entry date">
+          <label class="vis-toggle" title="Public entries can be read and liked by Gold and Bronze users">
+            <input type="checkbox" id="is-public">
+            <span id="vis-label">Public entry</span>
+          </label>
+        </div>
+        <span class="status" id="words"></span>
+      </div>
+      <input id="title" type="text" placeholder="Title" aria-label="Title">
+      <textarea id="body" placeholder="What happened today?" aria-label="Entry text"></textarea>
+      <div class="foot">
+        <button class="btn" id="save">Save entry</button>
+        <button type="button" class="like-btn" id="ed-like" aria-pressed="false">
+          <span aria-hidden="true">♥</span> <span id="ed-like-count">0 Likes</span>
+        </button>
+        <span class="status" id="status"></span>
+        <span class="sp"></span>
+        <button class="btn danger" id="del">Delete entry</button>
+      </div>
+    </div>
+
+    <!-- Read-Only Entry Viewer (Gold/Bronze viewing others' entries) -->
+    <article id="reader" class="reader-card" hidden>
+      <div class="reader-meta">
+        <span id="r-date"></span>
+        <span>•</span>
+        <span>By <strong id="r-author"></strong></span>
+        <span id="r-vis" class="badge"></span>
+      </div>
+      <h1 class="reader-title" id="r-title"></h1>
+      <div class="reader-body" id="r-body"></div>
+      <div class="reader-foot">
+        <button type="button" class="like-btn" id="r-like" aria-pressed="false">
+          <span aria-hidden="true">♥</span> <span id="r-like-txt">Like</span> (<span id="r-like-count">0</span>)
+        </button>
+        <span class="status" id="r-note"></span>
+      </div>
+    </article>
+
+    <p class="empty" id="none" hidden>No diary entries available to display.</p>
+  </main>
+</section>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var mem={};
+  function sget(k,sess){try{return(sess?sessionStorage:localStorage).getItem(k)}catch(e){return mem[k]||null}}
+  function sset(k,v,sess){try{(sess?sessionStorage:localStorage).setItem(k,v)}catch(e){mem[k]=v}}
+  function sdel(k,sess){try{(sess?sessionStorage:localStorage).removeItem(k)}catch(e){delete mem[k]}}
+
+  /* Data stores & migration */
+  function getUsers(){
+    var u={};
+    try{u=JSON.parse(sget("diary:users")||"{}")}catch(e){u={}}
+    var changed=false;
+    Object.keys(u).forEach(function(k){
+      if(!u[k].role){
+        u[k].role=u[k].admin?"admin":"gold";
+        changed=true;
+      }
+      if(typeof u[k].used!=="number"){u[k].used=0;changed=true}
+      if(typeof u[k].max!=="number"){u[k].max=0;changed=true}
+      if(u[k].role==="admin"){u[k].admin=true;u[k].canViewPrivate=true}
+    });
+    if(changed)sset("diary:users",JSON.stringify(u));
+    return u;
+  }
+  function saveUsers(u){sset("diary:users",JSON.stringify(u))}
+  function hasAdmin(u){return Object.keys(u).some(function(k){return u[k].role==="admin"||u[k].admin})}
+
+  function getAllEntries(){
+    var all=[];
+    try{
+      var raw=sget("diary:all_entries");
+      if(raw)all=JSON.parse(raw);
+    }catch(e){all=[]}
+    var u=getUsers(),migrated=false;
+    Object.keys(u).forEach(function(uname){
+      var legacyRaw=sget("diary:entries:"+uname);
+      if(legacyRaw){
+        try{
+          var arr=JSON.parse(legacyRaw);
+          if(Array.isArray(arr)){
+            arr.forEach(function(item){
+              if(!all.some(function(x){return x.id===item.id})){
+                all.push({
+                  id:item.id||("e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
+                  author:uname,
+                  date:item.date||today(),
+                  title:item.title||"",
+                  body:item.body||"",
+                  isPublic:!!item.isPublic,
+                  likes:Array.isArray(item.likes)?item.likes:[],
+                  updated:item.updated||Date.now()
+                });
+              }
+            });
+          }
+        }catch(e){}
+        sdel("diary:entries:"+uname);
+        migrated=true;
+      }
+    });
+    all.forEach(function(e){
+      if(!Array.isArray(e.likes))e.likes=[];
+      if(typeof e.isPublic!=="boolean")e.isPublic=false;
+    });
+    if(migrated)saveAllEntries(all);
+    return all;
+  }
+  function saveAllEntries(all){sset("diary:all_entries",JSON.stringify(all))}
+
+  var me=null,myRole="bronze",cur=null,dirty=false,mode="in",activeFilter="all";
+
+  function b64(buf){var s="";new Uint8Array(buf).forEach(function(b){s+=String.fromCharCode(b)});return btoa(s)}
+  async function hash(pw,salt){
+    var k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveBits"]);
+    var bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:Uint8Array.from(atob(salt),function(c){return c.charCodeAt(0)}),iterations:150000,hash:"SHA-256"},k,256);
+    return b64(bits);
+  }
+
+  /* Authentication */
+  function setMode(m){
+    mode=m;$("confirm-wrap").hidden=m==="in";
+    $("sub").textContent=m==="in"?"Sign in":"First-time setup: create the single administrator account";
+    $("go").textContent=m==="in"?"Sign in":"Create administrator";
+    $("pass").autocomplete=m==="in"?"current-password":"new-password";
+    $("err").textContent="";
+  }
+  [$("user"),$("pass"),$("pass2")].forEach(function(el){
+    el.addEventListener("keydown",function(e){if(e.key==="Enter")$("go").click()});
+  });
+
+  $("go").onclick=async function(){
+    var name=$("user").value.trim().toLowerCase(),pw=$("pass").value,err=$("err");
+    err.textContent="";
+    if(!/^[a-z0-9_.-]{3,24}$/.test(name)){err.textContent="Use 3–24 letters, numbers, dots, dashes or underscores for the username.";return}
+    if(pw.length<8){err.textContent="Use a password with at least 8 characters.";return}
+    if(!window.crypto||!crypto.subtle){err.textContent="This browser cannot secure passwords. Open the page over HTTPS or localhost.";return}
+    $("go").disabled=true;
+    try{
+      var u=getUsers();
+      if(mode==="setup"){
+        if(hasAdmin(u)){err.textContent="An administrator account already exists. Only one administrator is allowed.";setMode("in");return}
+        if($("pass2").value!==pw){err.textContent="The passwords do not match.";return}
+        var salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+        u[name]={salt:salt,hash:await hash(pw,salt),admin:true,role:"admin",max:0,used:0,canViewPrivate:true};
+        saveUsers(u);
+      }else{
+        if(!u[name]||await hash(pw,u[name].salt)!==u[name].hash){err.textContent="Username or password is incorrect.";return}
+        var a=u[name];
+        if(a.role!=="admin"&&a.max>0&&(a.used||0)>=a.max){
+          err.textContent="Your account has reached its maximum number of active uses ("+a.max+"/"+a.max+"). Please request a new account from the administrator.";
+          return;
+        }
+        a.used=(a.used||0)+1;
+        saveUsers(u);
+      }
+      sset("diary:session",name,true);
+      enter(name);
+    }finally{$("go").disabled=false}
+  };
+
+  function enter(name){
+    var u=getUsers(),acct=u[name];
+    if(!acct){logout();return}
+    me=name;
+    myRole=acct.role||(acct.admin?"admin":"gold");
+    $("pass").value="";$("pass2").value="";
+
+    /* Topmost Admin Tag setup */
+    var topTag=$("top-admin-tag");
+    topTag.className="rail-top-tag role-"+myRole;
+    if(myRole==="admin"){
+      $("top-tag-title").textContent="ADMIN TAG";
+      $("top-tag-sub").textContent=name+" • Manage Accounts";
+      topTag.title="Admin Tag — Click to manage accounts";
+    }else if(myRole==="gold"){
+      $("top-tag-title").textContent="GOLD USER";
+      $("top-tag-sub").textContent="Managed by Admin";
+      topTag.title="Gold User Tag";
+    }else{
+      $("top-tag-title").textContent="BRONZE USER";
+      $("top-tag-sub").textContent="Managed by Admin";
+      topTag.title="Bronze User Tag";
+    }
+
+    /* Reset search bar state (hidden until user clicks Search) */
+    $("q").value="";
+    $("search-box-wrap").hidden=true;
+    $("nav-search").setAttribute("aria-expanded","false");
+
+    /* Profile & Role setup inside Instagram rail */
+    $("avatar-init").textContent=name.slice(0,2).toUpperCase();
+    $("hello").textContent=name;
+    $("role-text").textContent=myRole==="admin"?"Administrator":(myRole==="gold"?"Gold User":"Bronze User");
+
+    $("adm").hidden=(myRole!=="admin");
+    $("dir-btn").hidden=(myRole!=="gold");
+    $("new").hidden=(myRole==="bronze");
+    $("nav-mine").hidden=(myRole==="bronze");
+
+    activeFilter="all";
+    updateNavHighlight("nav-home");
+
+    $("admin").hidden=true;
+    $("directory").hidden=true;
+    $("auth").hidden=true;
+    $("app").hidden=false;
+
+    cur=null;
+    renderList();
+    var vis=visibleEntries();
+    if(vis.length)open(vis[0].id);
+    else showEmpty();
+  }
+
+  function logout(){
+    sdel("diary:session",true);
+    me=null;cur=null;dirty=false;
+    $("q").value="";
+    $("search-box-wrap").hidden=true;
+    $("nav-search").setAttribute("aria-expanded","false");
+    $("nav-rail").classList.remove("expanded");
+    $("app").hidden=true;
+    $("auth").hidden=false;
+    setMode(hasAdmin(getUsers())?"in":"setup");
+    $("user").focus();
+  }
+  $("out").onclick=logout;
+
+  /* Topmost Admin Tag Click */
+  $("top-admin-tag").onclick=function(){
+    if(myRole==="admin"){
+      $("adm").click();
+    }else{
+      $("nav-home").click();
+    }
+  };
+
+  /* Instagram Rail Navigation & Hover/Touch Expansion */
+  var rail=$("nav-rail");
+  document.addEventListener("pointerdown",function(e){
+    if(rail&&!rail.contains(e.target)){
+      rail.classList.remove("expanded");
+    }
+  });
+  if(rail){
+    rail.addEventListener("mouseleave",function(){
+      if(document.activeElement&&rail.contains(document.activeElement)){
+        document.activeElement.blur();
+      }
+      rail.classList.remove("expanded");
+    });
+  }
+
+  function updateNavHighlight(activeId){
+    ["nav-home","nav-public","nav-mine","nav-liked","adm","dir-btn"].forEach(function(id){
+      var el=$(id);
+      if(el)el.setAttribute("aria-current",id===activeId?"true":"false");
+    });
+  }
+
+  ["nav-home","nav-public","nav-mine","nav-liked"].forEach(function(id){
+    var btn=$(id);
+    if(!btn)return;
+    btn.onclick=function(){
+      if(!guard())return;
+      activeFilter=btn.getAttribute("data-filter");
+      updateNavHighlight(id);
+      renderList();
+      if(!$("admin").hidden||!$("directory").hidden){
+        var vis=visibleEntries();
+        if(vis.length)open(vis[0].id);else showEmpty();
+      }
+    };
+  });
+
+  /* Click Search to toggle/reveal the Search Bar */
+  $("nav-search").onclick=function(){
+    var wrap=$("search-box-wrap");
+    var isHidden=wrap.hidden;
+    if(isHidden){
+      wrap.hidden=false;
+      $("nav-search").setAttribute("aria-expanded","true");
+      rail.classList.add("expanded");
+      setTimeout(function(){$("q").focus()},60);
+    }else{
+      $("q").value="";
+      wrap.hidden=true;
+      $("nav-search").setAttribute("aria-expanded","false");
+      renderList();
+    }
+  };
+
+  $("q-clear").onclick=function(){
+    $("q").value="";
+    $("search-box-wrap").hidden=true;
+    $("nav-search").setAttribute("aria-expanded","false");
+    renderList();
+  };
+
+  /* Access Control & Entries */
+  function canReadEntry(entry){
+    if(myRole==="admin")return true;
+    if(entry.author===me)return true;
+    if(entry.isPublic)return true;
+    var u=getUsers()[me];
+    if(u&&u.canViewPrivate)return true;
+    return false;
+  }
+
+  function canEditEntry(entry){
+    if(!entry)return false;
+    if(myRole==="admin")return true;
+    if(myRole==="gold"&&entry.author===me)return true;
+    return false;
+  }
+
+  function visibleEntries(){
+    var all=getAllEntries();
+    return all.filter(canReadEntry).sort(function(a,b){
+      return b.date.localeCompare(a.date)||b.updated-a.updated;
+    });
+  }
+
+  function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function fmt(s){
+    if(!s)return"";
+    var p=s.split("-");
+    return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+  }
+
+  function hideAllViews(){
+    $("admin").hidden=true;
+    $("directory").hidden=true;
+    $("editor").hidden=true;
+    $("reader").hidden=true;
+    $("none").hidden=true;
+  }
+  function showEmpty(){
+    hideAllViews();
+    $("none").textContent=(myRole==="bronze")
+      ?"No public diary entries are available to read yet."
+      :"No entries yet. Hover the left navigation bar and choose “Create Entry” to write your first one.";
+    $("none").hidden=false;
+  }
+
+  function renderList(){
+    var q=$("q").value.trim().toLowerCase(),ul=$("list");
+    ul.innerHTML="";
+    var vis=visibleEntries();
+    var rows=vis.filter(function(e){
+      if(activeFilter==="mine"&&e.author!==me)return false;
+      if(activeFilter==="public"&&!e.isPublic)return false;
+      if(activeFilter==="liked"&&(!Array.isArray(e.likes)||e.likes.indexOf(me)===-1))return false;
+      if(q&&(e.title+" "+e.body+" "+e.author).toLowerCase().indexOf(q)===-1)return false;
+      return true;
+    });
+
+    var au=me&&getUsers()[me],info="";
+    if(au&&myRole!=="admin"&&au.max>0){
+      var left=Math.max(0,au.max-(au.used||0));
+      info=left>0
+        ?" • "+left+" left"
+        :" • Final session";
+    }
+    $("count").textContent=vis.length+" visible "+(vis.length===1?"entry":"entries")+info;
+
+    if(!rows.length){
+      var li=document.createElement("li");
+      li.className="empty";
+      li.textContent=q?"No entries match your search.":"No entries in this view.";
+      ul.appendChild(li);
+      return;
+    }
+
+    rows.forEach(function(e){
+      var li=document.createElement("li"),b=document.createElement("button");
+      var top=document.createElement("div"),d=document.createElement("span"),visTag=document.createElement("span");
+      var t=document.createElement("span"),sub=document.createElement("div");
+
+      top.className="meta-row";
+      d.textContent=fmt(e.date);
+      visTag.textContent=e.isPublic?"Public":"Private";
+      visTag.style.color=e.isPublic?"var(--accent)":"var(--muted)";
+      visTag.style.fontWeight="600";
+      top.append(d,visTag);
+
+      t.className="t";
+      t.textContent=e.title||"Untitled";
+
+      sub.className="sub-meta";
+      var authorTxt=document.createElement("span");
+      authorTxt.textContent=(e.author===me?"You":e.author);
+      var likeTxt=document.createElement("span");
+      var lc=(e.likes||[]).length;
+      likeTxt.textContent=lc>0?("♥ "+lc):"";
+      sub.append(authorTxt,likeTxt);
+
+      b.append(top,t,sub);
+      if(e.id===cur)b.setAttribute("aria-current","true");
+      b.onclick=function(){if(guard())open(e.id)};
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+
+  function guard(){
+    if(!dirty)return true;
+    return window.confirm("You have unsaved changes. Discard them and switch views?");
+  }
+
+  function open(id){
+    var all=getAllEntries();
+    var e=all.filter(function(x){return x.id===id})[0];
+    if(!e||!canReadEntry(e))return;
+    cur=id;
+    dirty=false;
+    hideAllViews();
+
+    if(canEditEntry(e)){
+      $("date").value=e.date;
+      $("title").value=e.title;
+      $("body").value=e.body;
+      $("is-public").checked=!!e.isPublic;
+      $("vis-label").textContent=e.isPublic?"Public (visible to Gold & Bronze)":"Private (only you & Admin)";
+      $("status").textContent=(e.author!==me)?"Editing "+e.author+"’s entry":"";
+      $("del").textContent="Delete entry";
+      updateEditorLike(e);
+      $("editor").hidden=false;
+      words();
+    }else{
+      $("r-date").textContent=fmt(e.date);
+      $("r-author").textContent=e.author;
+      var rvis=$("r-vis");
+      rvis.className="badge "+(e.isPublic?"public":"private");
+      rvis.textContent=e.isPublic?"Public":"Private (Admin-granted)";
+      $("r-title").textContent=e.title||"Untitled";
+      $("r-body").textContent=e.body||"(Empty entry)";
+      updateReaderLike(e);
+      $("r-note").textContent=(myRole==="bronze")
+        ?"Bronze access: read-only & like"
+        :"Read-only entry";
+      $("reader").hidden=false;
+    }
+    renderList();
+  }
+
+  function updateEditorLike(e){
+    var likes=e.likes||[],liked=likes.indexOf(me)>-1;
+    var btn=$("ed-like");
+    btn.setAttribute("aria-pressed",liked?"true":"false");
+    $("ed-like-count").textContent=likes.length+(likes.length===1?" Like":" Likes");
+  }
+
+  function updateReaderLike(e){
+    var likes=e.likes||[],liked=likes.indexOf(me)>-1;
+    var btn=$("r-like");
+    btn.setAttribute("aria-pressed",liked?"true":"false");
+    $("r-like-txt").textContent=liked?"Liked":"Like";
+    $("r-like-count").textContent=likes.length;
+  }
+
+  function toggleLike(){
+    if(!cur||!me)return;
+    var all=getAllEntries();
+    var e=all.filter(function(x){return x.id===cur})[0];
+    if(!e||!canReadEntry(e))return;
+    if(!Array.isArray(e.likes))e.likes=[];
+    var idx=e.likes.indexOf(me);
+    if(idx>-1)e.likes.splice(idx,1);
+    else e.likes.push(me);
+    saveAllEntries(all);
+    if(!$("editor").hidden)updateEditorLike(e);
+    if(!$("reader").hidden)updateReaderLike(e);
+    renderList();
+  }
+  $("ed-like").onclick=toggleLike;
+  $("r-like").onclick=toggleLike;
+
+  function words(){
+    var n=($("body").value.trim().match(/\S+/g)||[]).length;
+    $("words").textContent=n+(n===1?" word":" words");
+  }
+  ["title","body","date"].forEach(function(id){
+    $(id).addEventListener("input",function(){
+      dirty=true;
+      $("status").textContent="Unsaved changes";
+      words();
+    });
+  });
+  $("is-public").addEventListener("change",function(){
+    dirty=true;
+    $("vis-label").textContent=$("is-public").checked
+      ?"Public (visible to Gold & Bronze)"
+      :"Private (only you & Admin)";
+    $("status").textContent="Unsaved changes";
+  });
+
+  $("new").onclick=function(){
+    if(myRole==="bronze")return;
+    if(!guard())return;
+    var all=getAllEntries();
+    var e={
+      id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      author:me,
+      date:today(),
+      title:"",
+      body:"",
+      isPublic:false,
+      likes:[],
+      updated:Date.now()
+    };
+    all.push(e);
+    saveAllEntries(all);
+    activeFilter="all";
+    updateNavHighlight("nav-home");
+    open(e.id);
+    $("title").focus();
+  };
+
+  $("save").onclick=function(){
+    var all=getAllEntries();
+    var e=all.filter(function(x){return x.id===cur})[0];
+    if(!e||!canEditEntry(e))return;
+    e.date=$("date").value||today();
+    e.title=$("title").value.trim();
+    e.body=$("body").value;
+    e.isPublic=$("is-public").checked;
+    e.updated=Date.now();
+    saveAllEntries(all);
+    dirty=false;
+    $("status").textContent="Saved";
+    renderList();
+  };
+
+  var armed=false;
+  $("del").onclick=function(){
+    if(!armed){
+      armed=true;
+      $("del").textContent="Click again to delete";
+      setTimeout(function(){armed=false;if($("del"))$("del").textContent="Delete entry"},3000);
+      return;
+    }
+    armed=false;
+    var all=getAllEntries().filter(function(x){return x.id!==cur});
+    saveAllEntries(all);
+    cur=null;dirty=false;
+    renderList();
+    var vis=visibleEntries();
+    if(vis.length)open(vis[0].id);else showEmpty();
+  };
+
+  $("q").oninput=renderList;
+  document.addEventListener("keydown",function(e){
+    if((e.ctrlKey||e.metaKey)&&e.key==="s"&&me&&cur&&!$("editor").hidden){
+      e.preventDefault();
+      $("save").click();
+    }
+  });
+
+  /* Admin Account Management (Only visible to Admin) */
+  function removeUser(n){
+    var x=getUsers();
+    if(!x[n]||x[n].role==="admin")return;
+    delete x[n];
+    saveUsers(x);
+    var remaining=getAllEntries().filter(function(e){return e.author!==n});
+    saveAllEntries(remaining);
+  }
+
+  function renderUsers(){
+    var tbody=$("ulist"),u=getUsers();
+    tbody.innerHTML="";
+    var names=Object.keys(u).sort(function(a,b){
+      if(u[a].role==="admin")return -1;
+      if(u[b].role==="admin")return 1;
+      return a.localeCompare(b);
+    });
+
+    names.forEach(function(n){
+      var acct=u[n],role=acct.role||(acct.admin?"admin":"gold");
+      var tr=document.createElement("tr");
+
+      var tdUser=document.createElement("td");
+      tdUser.innerHTML="<strong>"+escapeHtml(n)+"</strong>";
+
+      var tdRole=document.createElement("td");
+      var b=document.createElement("span");
+      b.className="badge "+role;
+      b.textContent=role==="admin"?"Admin (1st)":(role==="gold"?"Gold (2nd)":"Bronze (3rd)");
+      tdRole.appendChild(b);
+
+      var tdUsage=document.createElement("td");
+      if(role==="admin"){
+        tdUsage.innerHTML='<span class="status">'+(acct.used||1)+' sign-ins (Unlimited)</span>';
+      }else if(acct.max>0){
+        var used=acct.used||0,max=acct.max,pct=Math.min(100,Math.round((used/max)*100));
+        var exhausted=used>=max;
+        var label=document.createElement("div");
+        label.style.fontSize=".86rem";
+        label.innerHTML="<strong>"+used+"</strong> of <strong>"+max+"</strong> used "+(exhausted?'<span class="badge expired" style="margin-left:.35rem">Limit Reached</span>':"");
+        var bar=document.createElement("div");
+        bar.className="usage-bar";
+        var fill=document.createElement("div");
+        fill.className="usage-fill"+(exhausted?" full":(pct>=75?" warn":""));
+        fill.style.width=pct+"%";
+        bar.appendChild(fill);
+        tdUsage.append(label,bar);
+      }else{
+        tdUsage.innerHTML='<span class="status"><strong>'+(acct.used||0)+'</strong> uses (Unlimited)</span>';
+      }
+
+      var tdVis=document.createElement("td");
+      if(role==="admin"){
+        tdVis.innerHTML='<span class="status">All Public &amp; Private</span>';
+      }else{
+        var toggle=document.createElement("label");
+        toggle.style.cssText="display:inline-flex;align-items:center;gap:.4rem;font-size:.84rem;cursor:pointer;margin:0";
+        var cb=document.createElement("input");
+        cb.type="checkbox";
+        cb.checked=!!acct.canViewPrivate;
+        cb.style.accentColor="var(--accent)";
+        cb.onchange=function(){
+          var latest=getUsers();
+          if(latest[n]){
+            latest[n].canViewPrivate=cb.checked;
+            saveUsers(latest);
+          }
+        };
+        var txt=document.createElement("span");
+        txt.textContent=acct.canViewPrivate?"Public + Private":"Public only";
+        cb.addEventListener("change",function(){txt.textContent=cb.checked?"Public + Private":"Public only"});
+        toggle.append(cb,txt);
+        tdVis.appendChild(toggle);
+      }
+
+      var tdAct=document.createElement("td");
+      if(role!=="admin"){
+        var remBtn=document.createElement("button"),armedU=false;
+        remBtn.className="btn danger sm";
+        remBtn.textContent="Remove";
+        remBtn.onclick=function(){
+          if(!armedU){
+            armedU=true;
+            remBtn.textContent="Confirm remove";
+            setTimeout(function(){armedU=false;if(remBtn)remBtn.textContent="Remove"},3000);
+            return;
+          }
+          removeUser(n);
+          renderUsers();
+          renderList();
+        };
+        tdAct.appendChild(remBtn);
+      }else{
+        tdAct.innerHTML='<span class="status">Protected</span>';
+      }
+
+      tr.append(tdUser,tdRole,tdUsage,tdVis,tdAct);
+      tbody.appendChild(tr);
+    });
+  }
+
+  $("adm").onclick=function(){
+    if(myRole!=="admin")return;
+    if(!guard())return;
+    hideAllViews();
+    updateNavHighlight("adm");
+    $("admin").hidden=false;
+    $("aerr").textContent="";
+    renderUsers();
+    $("nu").focus();
+  };
+
+  $("aback").onclick=function(){
+    updateNavHighlight("nav-home");
+    var vis=visibleEntries();
+    if(vis.length)open(vis[0].id);else showEmpty();
+  };
+
+  $("mk").onclick=async function(){
+    var err=$("aerr"),name=$("nu").value.trim().toLowerCase(),pw=$("np").value;
+    var role=$("nrole").value,canPriv=$("npriv").checked;
+    err.style.color="";err.textContent="";
+    if(myRole!=="admin")return;
+    if(!/^[a-z0-9_.-]{3,24}$/.test(name)){err.textContent="Use 3–24 letters, numbers, dots, dashes or underscores for the username.";return}
+    if(pw.length<8){err.textContent="Use a password with at least 8 characters.";return}
+    if(role!=="gold"&&role!=="bronze"){err.textContent="Select a valid account level (Gold or Bronze).";return}
+
+    var u=getUsers();
+    if(u[name]&&(u[name].role==="admin"||u[name].admin)){
+      err.textContent="Only one administrator account is allowed and it cannot be overwritten here.";
+      return;
+    }
+    var raw=$("nl").value.trim(),max=raw?+raw:0;
+    if(raw&&(!Number.isInteger(max)||max<1||max>1000)){
+      err.textContent="Enter a whole number from 1 to 1000 for access times, or leave blank for unlimited.";
+      return;
+    }
+
+    var existed=!!u[name],salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+    u[name]={
+      salt:salt,
+      hash:await hash(pw,salt),
+      admin:false,
+      role:role,
+      max:max,
+      used:0,
+      canViewPrivate:canPriv
+    };
+    saveUsers(u);
+    $("nu").value="";$("np").value="";$("nl").value="";$("npriv").checked=false;
+    err.style.color="var(--accent)";
+    err.textContent=existed
+      ?"Updated "+name+" ("+role+" user, access counter reset)."
+      :"Created "+role+" user account for "+name+".";
+    renderUsers();
+  };
+
+  /* Gold User Directory (Read-only) */
+  function renderDirectory(){
+    var tbody=$("dlist"),u=getUsers(),all=getAllEntries();
+    tbody.innerHTML="";
+    Object.keys(u).sort().forEach(function(n){
+      var acct=u[n],role=acct.role||(acct.admin?"admin":"gold");
+      var pubCount=all.filter(function(e){return e.author===n&&e.isPublic}).length;
+      var tr=document.createElement("tr");
+      tr.innerHTML="<td><strong>"+escapeHtml(n)+"</strong></td>"
+        +'<td><span class="badge '+role+'">'+(role==="admin"?"Admin":(role==="gold"?"Gold User":"Bronze User"))+"</span></td>"
+        +'<td class="status">'+pubCount+(pubCount===1?" public entry":" public entries")+"</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  $("dir-btn").onclick=function(){
+    if(myRole!=="gold")return;
+    if(!guard())return;
+    hideAllViews();
+    updateNavHighlight("dir-btn");
+    $("directory").hidden=false;
+    renderDirectory();
+  };
+  $("dback").onclick=function(){
+    updateNavHighlight("nav-home");
+    var vis=visibleEntries();
+    if(vis.length)open(vis[0].id);else showEmpty();
+  };
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g,function(m){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];
+    });
+  }
+
+  /* Startup */
+  var s=sget("diary:session",true);
+  if(s&&getUsers()[s])enter(s);
+  else{
+    $("auth").hidden=false;
+    setMode(hasAdmin(getUsers())?"in":"setup");
+  }
+})();
+</script>
+</body>
+</html>

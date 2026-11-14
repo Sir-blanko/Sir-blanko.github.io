@@ -321,18 +321,23 @@ aside#nav-rail.expanded .rail-drawer{
   flex-shrink:0;
 }
 
-/* Main Content */
-main{padding:2rem clamp(1.25rem,5vw,4rem);max-width:880px;width:100%;margin:0 auto}
+/* Main Content & Split Layout */
+main{padding:2rem clamp(1.25rem,4vw,3rem);max-width:1300px;width:100%;margin:0 auto}
+.main-split{display:grid;grid-template-columns:1fr 360px;gap:2rem;align-items:start}
+@media (max-width:1024px){.main-split{grid-template-columns:1fr}}
+
+/* Side Projects Extended Card */
+.side-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+.side-card-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:.65rem}
+.side-card-head h3{font:600 1.15rem var(--serif);margin:0}
+.side-proj-list{display:flex;flex-direction:column;gap:.85rem;max-height:75vh;overflow-y:auto}
+.side-proj-item{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.85rem;display:flex;flex-direction:column;gap:.45rem}
+.side-proj-title{font:600 1rem var(--serif);margin:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.side-proj-desc{font:.88rem/1.5 var(--sans);color:var(--muted);margin:0;white-space:pre-wrap;word-break:break-word}
+.side-proj-img{width:100%;max-height:140px;object-fit:cover;border-radius:6px;margin-top:.25rem;border:1px solid var(--line)}
+
 .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .section-head h2{font:600 1.8rem var(--serif);margin:0 0 .2rem}
-
-/* Projects Grid & Cards */
-.projects-grid{display:grid;grid-template-columns:1fr;gap:1rem}
-.project-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.4rem;display:flex;flex-direction:column;gap:.65rem}
-.project-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.project-title{font:600 1.35rem/1.25 var(--serif);margin:0}
-.project-desc{font:1rem/1.65 var(--sans);color:var(--ink);white-space:pre-wrap;word-break:break-word;margin:0}
-.project-foot{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding-top:.65rem;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted);flex-wrap:wrap}
 
 /* Editor & Reader */
 .date-row{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem}
@@ -342,16 +347,21 @@ main{padding:2rem clamp(1.25rem,5vw,4rem);max-width:880px;width:100%;margin:0 au
 .vis-toggle input{accent-color:var(--accent);width:1rem;height:1rem;margin:0}
 #title{width:100%;border:0;background:none;font:600 clamp(1.7rem,4vw,2.35rem)/1.2 var(--serif);padding:.25rem 0;border-bottom:1px solid var(--line);margin-bottom:1rem}
 #title:focus-visible{outline:none;border-color:var(--accent)}
-#body{width:100%;min-height:48vh;resize:vertical;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:1.25rem;font:1.15rem/1.75 var(--serif)}
+#body{width:100%;min-height:42vh;resize:vertical;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:1.25rem;font:1.1rem/1.75 var(--serif)}
 .foot{display:flex;gap:.75rem;align-items:center;margin-top:1rem;flex-wrap:wrap}
 .foot .sp{flex:1}
 .status{color:var(--muted);font-size:.85rem}
+
+/* Entry Photo Preview & Upload */
+.photo-upload-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.photo-preview{max-height:160px;max-width:100%;border-radius:6px;border:1px solid var(--line);object-fit:cover}
 
 /* Read-only Diary View */
 .reader-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(1.25rem,3vw,2.25rem)}
 .reader-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;color:var(--muted);font-size:.88rem;margin-bottom:.65rem}
 .reader-title{font:600 clamp(1.7rem,4vw,2.3rem)/1.2 var(--serif);margin:0 0 1.25rem;padding-bottom:.85rem;border-bottom:1px solid var(--line)}
-.reader-body{font:1.15rem/1.8 var(--serif);white-space:pre-wrap;word-break:break-word;margin:0 0 1.75rem;min-height:18vh}
+.reader-body{font:1.15rem/1.8 var(--serif);white-space:pre-wrap;word-break:break-word;margin:0 0 1rem;min-height:16vh}
+.reader-img{width:100%;max-height:320px;object-fit:cover;border-radius:8px;margin-bottom:1.5rem;border:1px solid var(--line)}
 .reader-foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-top:1rem;border-top:1px solid var(--line);flex-wrap:wrap}
 .like-btn{display:inline-flex;align-items:center;gap:.45rem;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:.45rem 1rem;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .15s}
 .like-btn:hover:not(:disabled){border-color:var(--accent)}
@@ -431,12 +441,6 @@ tr:last-child td{border-bottom:0}
         <span class="ig-label">Home (All)</span>
       </button>
 
-      <!-- Projects (Always Public, Admin Managed) -->
-      <button type="button" class="ig-item" id="nav-projects" title="Public Projects">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-        <span class="ig-label">Projects</span>
-      </button>
-
       <!-- Public Feed -->
       <button type="button" class="ig-item" id="nav-public" data-filter="public" title="Public entries">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
@@ -497,50 +501,6 @@ tr:last-child td{border-bottom:0}
   </aside>
 
   <main>
-    <!-- Public Projects Section (Admin Write/Edit, Everyone Read) -->
-    <section id="projects-view" hidden>
-      <div class="section-head">
-        <div>
-          <h2>Projects</h2>
-          <p class="status" style="margin:0">Ongoing and completed projects published by the administrator (always public).</p>
-        </div>
-        <button class="btn ghost" id="pback">Back to diary</button>
-      </div>
-
-      <!-- Admin-Only Project Composer -->
-      <div class="panel" id="proj-admin-panel" hidden>
-        <h3 id="proj-form-heading" style="font:600 1.2rem var(--serif);margin:0 0 1rem">Add New Project</h3>
-        <input type="hidden" id="proj-edit-id" value="">
-        <div class="adm-grid">
-          <div class="field">
-            <label for="proj-title">Project Title</label>
-            <input id="proj-title" type="text" placeholder="e.g. Nightstand Diary Cloud Sync">
-          </div>
-          <div class="field">
-            <label for="proj-phase">Current Phase / Status</label>
-            <select id="proj-phase">
-              <option value="Planning">Planning</option>
-              <option value="In Progress" selected>In Progress</option>
-              <option value="Testing">Testing</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label for="proj-desc">Project Description</label>
-          <textarea id="proj-desc" class="form-area" placeholder="Describe the goals, features, and details of this project…"></textarea>
-        </div>
-        <p class="err" id="perr" role="alert"></p>
-        <div class="foot" style="margin-top:0">
-          <button class="btn" id="proj-save">Publish Project</button>
-          <button class="btn ghost" id="proj-cancel" hidden>Cancel Edit</button>
-        </div>
-      </div>
-
-      <!-- Public Projects List -->
-      <div class="projects-grid" id="proj-list"></div>
-    </section>
-
     <!-- Admin Account Management -->
     <section id="admin" hidden>
       <div class="section-head">
@@ -554,11 +514,11 @@ tr:last-child td{border-bottom:0}
       <div class="role-guide">
         <div class="role-box">
           <strong>1. Administrator <span class="badge admin">Admin</span></strong>
-          <p>Single admin account. Creates &amp; removes users, publishes public projects, sets access limits &amp; levels, and views all diaries.</p>
+          <p>Single admin account. Creates &amp; removes users, publishes projects with photos, sets access limits &amp; levels, and views all diaries.</p>
         </div>
         <div class="role-box">
           <strong>2. Gold User <span class="badge gold">Gold</span></strong>
-          <p>Can write personal &amp; public diary entries, read public diaries &amp; projects, like entries, and view registered users.</p>
+          <p>Can write personal &amp; public diary entries with photos, read public diaries &amp; projects, like entries, and view registered users.</p>
         </div>
         <div class="role-box">
           <strong>3. Bronze User <span class="badge bronze">Bronze</span></strong>
@@ -641,50 +601,108 @@ tr:last-child td{border-bottom:0}
       </div>
     </section>
 
-    <!-- Entry Editor (Author / Admin) -->
-    <div id="editor" hidden>
-      <div class="date-row">
-        <div class="date-controls">
-          <input type="date" id="date" aria-label="Entry date">
-          <label class="vis-toggle" title="Public entries can be read and liked by Gold and Bronze users">
-            <input type="checkbox" id="is-public">
-            <span id="vis-label">Public entry</span>
-          </label>
+    <!-- Diary Main View with Split Layout (Editor/Reader on Left, Projects Side Card on Right) -->
+    <div id="diary-main-view" class="main-split">
+      <div class="main-left-content">
+        <!-- Entry Editor (Author / Admin) -->
+        <div id="editor" hidden>
+          <div class="date-row">
+            <div class="date-controls">
+              <input type="date" id="date" aria-label="Entry date">
+              <label class="vis-toggle" title="Public entries can be read and liked by Gold and Bronze users">
+                <input type="checkbox" id="is-public">
+                <span id="vis-label">Public entry</span>
+              </label>
+            </div>
+            <span class="status" id="words"></span>
+          </div>
+          <input id="title" type="text" placeholder="Title" aria-label="Title">
+          <div class="photo-upload-row">
+            <div>
+              <label for="entry-photo" class="btn ghost sm" style="cursor:pointer">Attach photo</label>
+              <input type="file" id="entry-photo" accept="image/*" hidden>
+            </div>
+            <button type="button" class="btn danger sm" id="entry-photo-remove" hidden>Remove photo</button>
+          </div>
+          <img id="entry-photo-preview" class="photo-preview" hidden alt="Preview">
+          <textarea id="body" placeholder="What happened today?" aria-label="Entry text"></textarea>
+          <div class="foot">
+            <button class="btn" id="save">Save entry</button>
+            <button type="button" class="like-btn" id="ed-like" aria-pressed="false">
+              <span aria-hidden="true">♥</span> <span id="ed-like-count">0 Likes</span>
+            </button>
+            <span class="status" id="status"></span>
+            <span class="sp"></span>
+            <button class="btn danger" id="del">Delete entry</button>
+          </div>
         </div>
-        <span class="status" id="words"></span>
+
+        <!-- Read-Only Entry Viewer (Gold/Bronze viewing others' entries) -->
+        <article id="reader" class="reader-card" hidden>
+          <div class="reader-meta">
+            <span id="r-date"></span>
+            <span>•</span>
+            <span>By <strong id="r-author"></strong></span>
+            <span id="r-vis" class="badge"></span>
+          </div>
+          <h1 class="reader-title" id="r-title"></h1>
+          <img id="r-img" class="reader-img" hidden alt="Entry photo">
+          <div class="reader-body" id="r-body"></div>
+          <div class="reader-foot">
+            <button type="button" class="like-btn" id="r-like" aria-pressed="false">
+              <span aria-hidden="true">♥</span> <span id="r-like-txt">Like</span> (<span id="r-like-count">0</span>)
+            </button>
+            <span class="status" id="r-note"></span>
+          </div>
+        </article>
+
+        <p class="empty" id="none" hidden>No diary entries available to display.</p>
       </div>
-      <input id="title" type="text" placeholder="Title" aria-label="Title">
-      <textarea id="body" placeholder="What happened today?" aria-label="Entry text"></textarea>
-      <div class="foot">
-        <button class="btn" id="save">Save entry</button>
-        <button type="button" class="like-btn" id="ed-like" aria-pressed="false">
-          <span aria-hidden="true">♥</span> <span id="ed-like-count">0 Likes</span>
-        </button>
-        <span class="status" id="status"></span>
-        <span class="sp"></span>
-        <button class="btn danger" id="del">Delete entry</button>
-      </div>
+
+      <!-- Extended Side Card: Projects (Always Public, Admin Managed) -->
+      <aside class="side-card" aria-label="Projects overview">
+        <div class="side-card-head">
+          <h3>Projects &amp; Phases</h3>
+          <button class="btn sm" id="side-add-proj" hidden>+</button>
+        </div>
+
+        <!-- Admin Project Editor Modal/Box inside side card -->
+        <div id="side-proj-form-box" class="panel" style="margin:0;padding:1rem" hidden>
+          <h4 id="side-form-title" style="margin:0 0 .75rem;font:600 1rem var(--serif)">Add Project</h4>
+          <input type="hidden" id="sp-edit-id" value="">
+          <div class="field" style="margin-bottom:.75rem">
+            <label for="sp-title" style="font-size:.82rem">Title</label>
+            <input id="sp-title" type="text" placeholder="Project name">
+          </div>
+          <div class="field" style="margin-bottom:.75rem">
+            <label for="sp-phase" style="font-size:.82rem">Phase</label>
+            <select id="sp-phase" style="font-size:.85rem;padding:.4rem">
+              <option value="Planning">Planning</option>
+              <option value="In Progress" selected>In Progress</option>
+              <option value="Testing">Testing</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:.75rem">
+            <label for="sp-photo" style="font-size:.82rem">Project Photo</label>
+            <input type="file" id="sp-photo" accept="image/*" style="font-size:.82rem;padding:.3rem">
+            <img id="sp-photo-preview" class="photo-preview" style="max-height:100px;margin-top:.4rem" hidden alt="Preview">
+            <button type="button" class="btn danger sm" id="sp-photo-remove" style="margin-top:.4rem" hidden>Remove photo</button>
+          </div>
+          <div class="field" style="margin-bottom:.75rem">
+            <label for="sp-desc" style="font-size:.82rem">Description</label>
+            <textarea id="sp-desc" class="form-area" style="min-height:75px;font-size:.85rem" placeholder="Project details…"></textarea>
+          </div>
+          <p class="err" id="sperr" style="font-size:.8rem;margin-bottom:.5rem" role="alert"></p>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn sm" id="sp-save">Save</button>
+            <button class="btn ghost sm" id="sp-cancel">Cancel</button>
+          </div>
+        </div>
+
+        <div class="side-proj-list" id="side-proj-list"></div>
+      </aside>
     </div>
-
-    <!-- Read-Only Entry Viewer (Gold/Bronze viewing others' entries) -->
-    <article id="reader" class="reader-card" hidden>
-      <div class="reader-meta">
-        <span id="r-date"></span>
-        <span>•</span>
-        <span>By <strong id="r-author"></strong></span>
-        <span id="r-vis" class="badge"></span>
-      </div>
-      <h1 class="reader-title" id="r-title"></h1>
-      <div class="reader-body" id="r-body"></div>
-      <div class="reader-foot">
-        <button type="button" class="like-btn" id="r-like" aria-pressed="false">
-          <span aria-hidden="true">♥</span> <span id="r-like-txt">Like</span> (<span id="r-like-count">0</span>)
-        </button>
-        <span class="status" id="r-note"></span>
-      </div>
-    </article>
-
-    <p class="empty" id="none" hidden>No diary entries available to display.</p>
   </main>
 </section>
 
@@ -753,6 +771,7 @@ tr:last-child td{border-bottom:0}
         date:row.date,
         title:row.title||'',
         body:row.body||'',
+        image:row.image||'',
         isPublic:!!row.is_public,
         likes:Array.isArray(row.likes)?row.likes:[],
         updated:row.updated||Date.now()
@@ -770,6 +789,7 @@ tr:last-child td{border-bottom:0}
         date:e.date,
         title:e.title,
         body:e.body,
+        image:e.image||null,
         is_public:!!e.isPublic,
         likes:e.likes||[],
         updated:e.updated
@@ -794,6 +814,7 @@ tr:last-child td{border-bottom:0}
       title:proj.title,
       phase:proj.phase,
       description:proj.description,
+      image:proj.image||null,
       created_by:proj.created_by,
       updated:proj.updated
     });
@@ -804,12 +825,20 @@ tr:last-child td{border-bottom:0}
   }
 
   var me=null,myRole="bronze",cur=null,dirty=false,mode="in",activeFilter="all";
+  var currentEntryImage="", currentProjImage="";
 
   function b64(buf){var s="";new Uint8Array(buf).forEach(function(b){s+=String.fromCharCode(b)});return btoa(s)}
   async function hash(pw,salt){
     var k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveBits"]);
     var bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:Uint8Array.from(atob(salt),function(c){return c.charCodeAt(0)}),iterations:150000,hash:"SHA-256"},k,256);
     return b64(bits);
+  }
+
+  /* File to Base64 helper */
+  function fileToDataUrl(file,cb){
+    var reader=new FileReader();
+    reader.onload=function(e){cb(e.target.result)};
+    reader.readAsDataURL(file);
   }
 
   /* Authentication */
@@ -890,7 +919,7 @@ tr:last-child td{border-bottom:0}
     $("dir-btn").hidden=(myRole!=="gold");
     $("new").hidden=(myRole==="bronze");
     $("nav-mine").hidden=(myRole==="bronze");
-    $("proj-admin-panel").hidden=(myRole!=="admin");
+    $("side-add-proj").hidden=(myRole!=="admin");
 
     activeFilter="all";
     updateNavHighlight("nav-home");
@@ -900,6 +929,7 @@ tr:last-child td{border-bottom:0}
     $("app").hidden=false;
 
     cur=null;
+    await renderProjectsList();
     await renderList();
     var vis=await visibleEntries();
     if(vis.length)await open(vis[0].id);
@@ -944,7 +974,7 @@ tr:last-child td{border-bottom:0}
   }
 
   function updateNavHighlight(activeId){
-    ["nav-home","nav-projects","nav-public","nav-mine","nav-liked","adm","dir-btn"].forEach(function(id){
+    ["nav-home","nav-public","nav-mine","nav-liked","adm","dir-btn"].forEach(function(id){
       var el=$(id);
       if(el)el.setAttribute("aria-current",id===activeId?"true":"false");
     });
@@ -958,7 +988,9 @@ tr:last-child td{border-bottom:0}
       activeFilter=btn.getAttribute("data-filter");
       updateNavHighlight(id);
       await renderList();
-      if(!$("admin").hidden||!$("directory").hidden||!$("projects-view").hidden){
+      if(!$("admin").hidden||!$("directory").hidden){
+        hideAllViews();
+        $("diary-main-view").hidden=false;
         var vis=await visibleEntries();
         if(vis.length)await open(vis[0].id);else showEmpty();
       }
@@ -1024,167 +1056,225 @@ tr:last-child td{border-bottom:0}
   }
 
   function hideAllViews(){
-    $("projects-view").hidden=true;
     $("admin").hidden=true;
     $("directory").hidden=true;
+    $("diary-main-view").hidden=true;
     $("editor").hidden=true;
     $("reader").hidden=true;
     $("none").hidden=true;
   }
   function showEmpty(){
-    hideAllViews();
+    $("editor").hidden=true;
+    $("reader").hidden=true;
     $("none").textContent=(myRole==="bronze")
       ?"No public diary entries are available to read yet."
       :"No entries yet. Hover the left navigation bar and choose “Create Entry” to write your first one.";
     $("none").hidden=false;
   }
 
-  /* Projects View & Admin Controls */
-  function resetProjectForm(){
-    $("proj-edit-id").value="";
-    $("proj-title").value="";
-    $("proj-phase").value="In Progress";
-    $("proj-desc").value="";
-    $("proj-form-heading").textContent="Add New Project";
-    $("proj-save").textContent="Publish Project";
-    $("proj-cancel").hidden=true;
-    $("perr").textContent="";
+  /* Side Projects Extended Card Logic */
+  function resetSideProjForm(){
+    $("sp-edit-id").value="";
+    $("sp-title").value="";
+    $("sp-phase").value="In Progress";
+    $("sp-desc").value="";
+    currentProjImage="";
+    $("sp-photo").value="";
+    $("sp-photo-preview").src="";
+    $("sp-photo-preview").hidden=true;
+    $("sp-photo-remove").hidden=true;
+    $("side-form-title").textContent="Add Project";
+    $("sp-save").textContent="Save";
+    $("side-proj-form-box").hidden=true;
+    $("sperr").textContent="";
   }
 
-  async function renderProjects(){
-    var list=$("proj-list"),projects=await getAllProjects();
-    list.innerHTML="";
+  async function renderProjectsList(){
+    var container=$("side-proj-list"),projects=await getAllProjects();
+    container.innerHTML="";
     if(!projects.length){
       var emp=document.createElement("p");
       emp.className="empty";
-      emp.textContent="No projects have been published yet.";
-      list.appendChild(emp);
+      emp.textContent="No projects published yet.";
+      container.appendChild(emp);
       return;
     }
 
     projects.forEach(function(p){
-      var card=document.createElement("article");
-      card.className="project-card";
+      var item=document.createElement("div");
+      item.className="side-proj-item";
 
-      var head=document.createElement("div");
-      head.className="project-head";
-
-      var title=document.createElement("h3");
-      title.className="project-title";
-      title.textContent=p.title;
+      var titleRow=document.createElement("h4");
+      titleRow.className="side-proj-title";
+      
+      var tSpan=document.createElement("span");
+      tSpan.textContent=p.title;
 
       var badgeWrap=document.createElement("div");
-      badgeWrap.style.cssText="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap";
+      badgeWrap.style.cssText="display:flex;gap:.3rem;align-items:center";
 
-      var phaseBadge=document.createElement("span");
-      phaseBadge.className="badge "+(p.phase==="Completed"?"public":(p.phase==="Testing"?"gold":"admin"));
-      phaseBadge.textContent=p.phase;
+      var pBadge=document.createElement("span");
+      pBadge.className="badge "+(p.phase==="Completed"?"public":(p.phase==="Testing"?"gold":"admin"));
+      pBadge.style.fontSize="0.68rem";
+      pBadge.textContent=p.phase;
+      badgeWrap.appendChild(pBadge);
 
-      var pubBadge=document.createElement("span");
-      pubBadge.className="badge public";
-      pubBadge.textContent="Public";
+      titleRow.append(tSpan,badgeWrap);
 
-      badgeWrap.append(phaseBadge,pubBadge);
-      head.append(title,badgeWrap);
+      if(p.image){
+        var img=document.createElement("img");
+        img.className="side-proj-img";
+        img.src=p.image;
+        img.alt=p.title;
+        item.appendChild(titleRow);
+        item.appendChild(img);
+      }else{
+        item.appendChild(titleRow);
+      }
 
       var desc=document.createElement("p");
-      desc.className="project-desc";
+      desc.className="side-proj-desc";
       desc.textContent=p.description;
+      item.appendChild(desc);
 
       var foot=document.createElement("div");
-      foot.className="project-foot";
-
-      var meta=document.createElement("span");
-      var dStr=new Date(p.updated).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
-      meta.textContent="Published by "+p.created_by+" • Updated "+dStr;
-      foot.appendChild(meta);
+      foot.style.cssText="display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:.2rem";
+      foot.textContent="By "+p.created_by;
 
       if(myRole==="admin"){
-        var actions=document.createElement("div");
-        actions.style.cssText="display:flex;gap:.5rem";
+        var actWrap=document.createElement("div");
+        actWrap.style.cssText="display:flex;gap:.35rem";
 
         var editBtn=document.createElement("button");
         editBtn.className="btn ghost sm";
+        editBtn.style.padding="0.2rem 0.4rem";
+        editBtn.style.fontSize="0.72rem";
         editBtn.textContent="Edit";
         editBtn.onclick=function(){
-          $("proj-edit-id").value=p.id;
-          $("proj-title").value=p.title;
-          $("proj-phase").value=p.phase;
-          $("proj-desc").value=p.description;
-          $("proj-form-heading").textContent="Edit Project";
-          $("proj-save").textContent="Update Project";
-          $("proj-cancel").hidden=false;
-          $("perr").textContent="";
-          $("proj-title").focus();
+          $("side-proj-form-box").hidden=false;
+          $("sp-edit-id").value=p.id;
+          $("sp-title").value=p.title;
+          $("sp-phase").value=p.phase;
+          $("sp-desc").value=p.description;
+          currentProjImage=p.image||"";
+          if(currentProjImage){
+            $("sp-photo-preview").src=currentProjImage;
+            $("sp-photo-preview").hidden=false;
+            $("sp-photo-remove").hidden=false;
+          }else{
+            $("sp-photo-preview").hidden=true;
+            $("sp-photo-remove").hidden=true;
+          }
+          $("side-form-title").textContent="Edit Project";
+          $("sp-save").textContent="Update";
+          $("sp-title").focus();
         };
 
-        var delBtn=document.createElement("button"),armedP=false;
+        var delBtn=document.createElement("button"),armedSP=false;
         delBtn.className="btn danger sm";
-        delBtn.textContent="Delete";
+        delBtn.style.padding="0.2rem 0.4rem";
+        delBtn.style.fontSize="0.72rem";
+        delBtn.textContent="Del";
         delBtn.onclick=async function(){
-          if(!armedP){
-            armedP=true;
-            delBtn.textContent="Confirm delete";
-            setTimeout(function(){armedP=false;if(delBtn)delBtn.textContent="Delete"},3000);
+          if(!armedSP){
+            armedSP=true;
+            delBtn.textContent="Sure?";
+            setTimeout(function(){armedSP=false;if(delBtn)delBtn.textContent="Del"},3000);
             return;
           }
           await deleteProjectDb(p.id);
-          if($("proj-edit-id").value===p.id)resetProjectForm();
-          await renderProjects();
+          if($("sp-edit-id").value===p.id)resetSideProjForm();
+          await renderProjectsList();
         };
 
-        actions.append(editBtn,delBtn);
-        foot.appendChild(actions);
+        actWrap.append(editBtn,delBtn);
+        foot.appendChild(actWrap);
       }
 
-      card.append(head,desc,foot);
-      list.appendChild(card);
+      item.appendChild(foot);
+      container.appendChild(item);
     });
   }
 
-  $("nav-projects").onclick=async function(){
-    if(!guard())return;
-    hideAllViews();
-    updateNavHighlight("nav-projects");
-    resetProjectForm();
-    $("projects-view").hidden=false;
-    await renderProjects();
-  };
-
-  $("pback").onclick=async function(){
-    updateNavHighlight("nav-home");
-    var vis=await visibleEntries();
-    if(vis.length)await open(vis[0].id);else showEmpty();
-  };
-
-  $("proj-cancel").onclick=resetProjectForm;
-
-  $("proj-save").onclick=async function(){
+  $("side-add-proj").onclick=function(){
     if(myRole!=="admin")return;
-    var err=$("perr"),title=$("proj-title").value.trim(),phase=$("proj-phase").value,desc=$("proj-desc").value.trim();
-    err.style.color="";err.textContent="";
-    if(!title){err.textContent="Please enter a project title.";return}
-    if(!desc){err.textContent="Please enter a project description.";return}
+    resetSideProjForm();
+    $("side-proj-form-box").hidden=false;
+    $("sp-title").focus();
+  };
 
-    $("proj-save").disabled=true;
+  $("sp-cancel").onclick=resetSideProjForm;
+
+  $("sp-photo").onchange=function(e){
+    var file=e.target.files[0];
+    if(file){
+      fileToDataUrl(file,function(url){
+        currentProjImage=url;
+        $("sp-photo-preview").src=url;
+        $("sp-photo-preview").hidden=false;
+        $("sp-photo-remove").hidden=false;
+      });
+    }
+  };
+
+  $("sp-photo-remove").onclick=function(){
+    currentProjImage="";
+    $("sp-photo").value="";
+    $("sp-photo-preview").src="";
+    $("sp-photo-preview").hidden=true;
+    $("sp-photo-remove").hidden=true;
+  };
+
+  $("sp-save").onclick=async function(){
+    if(myRole!=="admin")return;
+    var err=$("sperr"),title=$("sp-title").value.trim(),phase=$("sp-phase").value,desc=$("sp-desc").value.trim();
+    err.textContent="";
+    if(!title){err.textContent="Enter title.";return}
+    if(!desc){err.textContent="Enter description.";return}
+
+    $("sp-save").disabled=true;
     try{
-      var editId=$("proj-edit-id").value;
+      var editId=$("sp-edit-id").value;
       var proj={
         id:editId||("p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
         title:title,
         phase:phase,
         description:desc,
+        image:currentProjImage,
         created_by:me,
         updated:Date.now()
       };
       await saveProjectDb(proj);
-      resetProjectForm();
-      err.style.color="var(--accent)";
-      err.textContent=editId?"Project updated.":"Project published publicly.";
-      await renderProjects();
+      resetSideProjForm();
+      await renderProjectsList();
     }finally{
-      $("proj-save").disabled=false;
+      $("sp-save").disabled=false;
     }
+  };
+
+  /* Entry Photo Attachments */
+  $("entry-photo").onchange=function(e){
+    var file=e.target.files[0];
+    if(file){
+      fileToDataUrl(file,function(url){
+        currentEntryImage=url;
+        $("entry-photo-preview").src=url;
+        $("entry-photo-preview").hidden=false;
+        $("entry-photo-remove").hidden=false;
+        dirty=true;
+        $("status").textContent="Unsaved changes";
+      });
+    }
+  };
+
+  $("entry-photo-remove").onclick=function(){
+    currentEntryImage="";
+    $("entry-photo").value="";
+    $("entry-photo-preview").src="";
+    $("entry-photo-preview").hidden=true;
+    $("entry-photo-remove").hidden=true;
+    dirty=true;
+    $("status").textContent="Unsaved changes";
   };
 
   async function renderList(){
@@ -1259,6 +1349,7 @@ tr:last-child td{border-bottom:0}
     cur=id;
     dirty=false;
     hideAllViews();
+    $("diary-main-view").hidden=false;
 
     if(canEditEntry(e)){
       $("date").value=e.date;
@@ -1266,6 +1357,16 @@ tr:last-child td{border-bottom:0}
       $("body").value=e.body;
       $("is-public").checked=!!e.isPublic;
       $("vis-label").textContent=e.isPublic?"Public (visible to Gold & Bronze)":"Private (only you & Admin)";
+      currentEntryImage=e.image||"";
+      if(currentEntryImage){
+        $("entry-photo-preview").src=currentEntryImage;
+        $("entry-photo-preview").hidden=false;
+        $("entry-photo-remove").hidden=false;
+      }else{
+        $("entry-photo-preview").hidden=true;
+        $("entry-photo-remove").hidden=true;
+        $("entry-photo").value="";
+      }
       $("status").textContent=(e.author!==me)?"Editing "+e.author+"’s entry":"";
       $("del").textContent="Delete entry";
       updateEditorLike(e);
@@ -1278,6 +1379,12 @@ tr:last-child td{border-bottom:0}
       rvis.className="badge "+(e.isPublic?"public":"private");
       rvis.textContent=e.isPublic?"Public":"Private (Admin-granted)";
       $("r-title").textContent=e.title||"Untitled";
+      if(e.image){
+        $("r-img").src=e.image;
+        $("r-img").hidden=false;
+      }else{
+        $("r-img").hidden=true;
+      }
       $("r-body").textContent=e.body||"(Empty entry)";
       updateReaderLike(e);
       $("r-note").textContent=(myRole==="bronze")
@@ -1349,6 +1456,7 @@ tr:last-child td{border-bottom:0}
       date:today(),
       title:"",
       body:"",
+      image:"",
       isPublic:false,
       likes:[],
       updated:Date.now()
@@ -1368,6 +1476,7 @@ tr:last-child td{border-bottom:0}
     e.date=$("date").value||today();
     e.title=$("title").value.trim();
     e.body=$("body").value;
+    e.image=currentEntryImage;
     e.isPublic=$("is-public").checked;
     e.updated=Date.now();
     await saveAllEntries(all);
@@ -1505,6 +1614,8 @@ tr:last-child td{border-bottom:0}
 
   $("aback").onclick=async function(){
     updateNavHighlight("nav-home");
+    $("admin").hidden=true;
+    $("diary-main-view").hidden=false;
     var vis=await visibleEntries();
     if(vis.length)await open(vis[0].id);else showEmpty();
   };
@@ -1572,6 +1683,8 @@ tr:last-child td{border-bottom:0}
   };
   $("dback").onclick=async function(){
     updateNavHighlight("nav-home");
+    $("directory").hidden=true;
+    $("diary-main-view").hidden=false;
     var vis=await visibleEntries();
     if(vis.length)await open(vis[0].id);else showEmpty();
   };

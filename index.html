@@ -56,7 +56,8 @@ button,input,textarea,select{font:inherit;color:inherit}
 .lede{font:italic 1.05rem/1.4 var(--serif);color:var(--muted);margin:0 0 1.5rem}
 label{display:block;font-size:.9rem;font-weight:500;margin:0 0 .3rem}
 .field{margin-bottom:1rem}
-input[type=text],input[type=password],input[type=date],input[type=search],input[type=number],select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:.58rem .75rem}
+input[type=text],input[type=password],input[type=date],input[type=search],input[type=number],select,textarea.form-area{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:.58rem .75rem}
+textarea.form-area{min-height:110px;resize:vertical;font-family:var(--sans);line-height:1.5}
 .err{color:var(--danger);font-size:.9rem;min-height:1.3rem;margin:0 0 .75rem}
 .note{color:var(--muted);font-size:.82rem;margin:1.25rem 0 0;line-height:1.45}
 
@@ -160,7 +161,7 @@ aside#nav-rail.expanded .rail-tag-info{
   align-items:center;
   gap:.95rem;
   width:100%;
-  height:46px;
+  height:44px;
   padding:0 .65rem;
   border:0;
   border-radius:10px;
@@ -177,8 +178,8 @@ aside#nav-rail.expanded .rail-tag-info{
 .ig-item[aria-current="true"]{background:var(--sel);font-weight:600}
 .ig-item[aria-current="true"] svg{color:var(--accent)}
 .ig-item svg{
-  width:24px;
-  height:24px;
+  width:23px;
+  height:23px;
   flex-shrink:0;
   stroke:currentColor;
   fill:none;
@@ -189,7 +190,7 @@ aside#nav-rail.expanded .rail-tag-info{
 }
 .ig-item:hover svg{transform:scale(1.06)}
 .ig-label{
-  font-size:.95rem;
+  font-size:.93rem;
   white-space:nowrap;
   opacity:0;
   transform:translateX(-6px);
@@ -203,7 +204,7 @@ aside#nav-rail.expanded .ig-label{
   transform:translateX(0);
 }
 
-/* Search Input Drawer (Revealed ONLY when user clicks Search) */
+/* Search Input Drawer */
 .search-box-wrap{
   padding:.25rem .35rem .5rem;
   opacity:0;
@@ -272,7 +273,7 @@ aside#nav-rail.expanded .ig-profile-info{
 .ig-profile-name{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ig-profile-sub{font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Expandable Drawer Section (Entries List) - hidden when rail is collapsed */
+/* Expandable Drawer Section (Entries List) */
 .rail-drawer{
   display:flex;
   flex-direction:column;
@@ -312,7 +313,7 @@ aside#nav-rail.expanded .rail-drawer{
 #list .sub-meta{display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:.18rem}
 .empty{color:var(--muted);padding:.75rem .5rem;font-size:.88rem}
 
-/* Bottom Rail Actions (Sign out) */
+/* Bottom Rail Actions */
 .ig-bottom{
   margin-top:auto;
   padding-top:.5rem;
@@ -324,6 +325,14 @@ aside#nav-rail.expanded .rail-drawer{
 main{padding:2rem clamp(1.25rem,5vw,4rem);max-width:880px;width:100%;margin:0 auto}
 .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
 .section-head h2{font:600 1.8rem var(--serif);margin:0 0 .2rem}
+
+/* Projects Grid & Cards */
+.projects-grid{display:grid;grid-template-columns:1fr;gap:1rem}
+.project-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.4rem;display:flex;flex-direction:column;gap:.65rem}
+.project-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.project-title{font:600 1.35rem/1.25 var(--serif);margin:0}
+.project-desc{font:1rem/1.65 var(--sans);color:var(--ink);white-space:pre-wrap;word-break:break-word;margin:0}
+.project-foot{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding-top:.65rem;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted);flex-wrap:wrap}
 
 /* Editor & Reader */
 .date-row{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem}
@@ -422,6 +431,12 @@ tr:last-child td{border-bottom:0}
         <span class="ig-label">Home (All)</span>
       </button>
 
+      <!-- Projects (Always Public, Admin Managed) -->
+      <button type="button" class="ig-item" id="nav-projects" title="Public Projects">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        <span class="ig-label">Projects</span>
+      </button>
+
       <!-- Public Feed -->
       <button type="button" class="ig-item" id="nav-public" data-filter="public" title="Public entries">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
@@ -482,6 +497,50 @@ tr:last-child td{border-bottom:0}
   </aside>
 
   <main>
+    <!-- Public Projects Section (Admin Write/Edit, Everyone Read) -->
+    <section id="projects-view" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Projects</h2>
+          <p class="status" style="margin:0">Ongoing and completed projects published by the administrator (always public).</p>
+        </div>
+        <button class="btn ghost" id="pback">Back to diary</button>
+      </div>
+
+      <!-- Admin-Only Project Composer -->
+      <div class="panel" id="proj-admin-panel" hidden>
+        <h3 id="proj-form-heading" style="font:600 1.2rem var(--serif);margin:0 0 1rem">Add New Project</h3>
+        <input type="hidden" id="proj-edit-id" value="">
+        <div class="adm-grid">
+          <div class="field">
+            <label for="proj-title">Project Title</label>
+            <input id="proj-title" type="text" placeholder="e.g. Nightstand Diary Cloud Sync">
+          </div>
+          <div class="field">
+            <label for="proj-phase">Current Phase / Status</label>
+            <select id="proj-phase">
+              <option value="Planning">Planning</option>
+              <option value="In Progress" selected>In Progress</option>
+              <option value="Testing">Testing</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="proj-desc">Project Description</label>
+          <textarea id="proj-desc" class="form-area" placeholder="Describe the goals, features, and details of this project…"></textarea>
+        </div>
+        <p class="err" id="perr" role="alert"></p>
+        <div class="foot" style="margin-top:0">
+          <button class="btn" id="proj-save">Publish Project</button>
+          <button class="btn ghost" id="proj-cancel" hidden>Cancel Edit</button>
+        </div>
+      </div>
+
+      <!-- Public Projects List -->
+      <div class="projects-grid" id="proj-list"></div>
+    </section>
+
     <!-- Admin Account Management -->
     <section id="admin" hidden>
       <div class="section-head">
@@ -495,15 +554,15 @@ tr:last-child td{border-bottom:0}
       <div class="role-guide">
         <div class="role-box">
           <strong>1. Administrator <span class="badge admin">Admin</span></strong>
-          <p>Single admin account. Creates &amp; removes users, sets access limits &amp; levels, and can view all private and public diaries.</p>
+          <p>Single admin account. Creates &amp; removes users, publishes public projects, sets access limits &amp; levels, and views all diaries.</p>
         </div>
         <div class="role-box">
           <strong>2. Gold User <span class="badge gold">Gold</span></strong>
-          <p>Can write personal &amp; public diary entries, read public diaries, like entries, and view registered users (cannot add/remove users).</p>
+          <p>Can write personal &amp; public diary entries, read public diaries &amp; projects, like entries, and view registered users.</p>
         </div>
         <div class="role-box">
           <strong>3. Bronze User <span class="badge bronze">Bronze</span></strong>
-          <p>Read-only access to public diary entries (plus any private diaries explicitly permitted by the admin) and can like entries.</p>
+          <p>Read-only access to public diary entries &amp; projects (plus any private diaries explicitly permitted by the admin) and can like entries.</p>
         </div>
       </div>
 
@@ -722,6 +781,28 @@ tr:last-child td{border-bottom:0}
     await _db.from('entries').delete().eq('id',id);
   }
 
+  /* Projects Cloud Data Layer */
+  async function getAllProjects(){
+    var {data,error}=await _db.from('projects').select('*');
+    if(error||!data)return[];
+    return data.sort(function(a,b){return (b.updated||0)-(a.updated||0)});
+  }
+
+  async function saveProjectDb(proj){
+    await _db.from('projects').upsert({
+      id:proj.id,
+      title:proj.title,
+      phase:proj.phase,
+      description:proj.description,
+      created_by:proj.created_by,
+      updated:proj.updated
+    });
+  }
+
+  async function deleteProjectDb(id){
+    await _db.from('projects').delete().eq('id',id);
+  }
+
   var me=null,myRole="bronze",cur=null,dirty=false,mode="in",activeFilter="all";
 
   function b64(buf){var s="";new Uint8Array(buf).forEach(function(b){s+=String.fromCharCode(b)});return btoa(s)}
@@ -809,12 +890,12 @@ tr:last-child td{border-bottom:0}
     $("dir-btn").hidden=(myRole!=="gold");
     $("new").hidden=(myRole==="bronze");
     $("nav-mine").hidden=(myRole==="bronze");
+    $("proj-admin-panel").hidden=(myRole!=="admin");
 
     activeFilter="all";
     updateNavHighlight("nav-home");
 
-    $("admin").hidden=true;
-    $("directory").hidden=true;
+    hideAllViews();
     $("auth").hidden=true;
     $("app").hidden=false;
 
@@ -863,7 +944,7 @@ tr:last-child td{border-bottom:0}
   }
 
   function updateNavHighlight(activeId){
-    ["nav-home","nav-public","nav-mine","nav-liked","adm","dir-btn"].forEach(function(id){
+    ["nav-home","nav-projects","nav-public","nav-mine","nav-liked","adm","dir-btn"].forEach(function(id){
       var el=$(id);
       if(el)el.setAttribute("aria-current",id===activeId?"true":"false");
     });
@@ -877,7 +958,7 @@ tr:last-child td{border-bottom:0}
       activeFilter=btn.getAttribute("data-filter");
       updateNavHighlight(id);
       await renderList();
-      if(!$("admin").hidden||!$("directory").hidden){
+      if(!$("admin").hidden||!$("directory").hidden||!$("projects-view").hidden){
         var vis=await visibleEntries();
         if(vis.length)await open(vis[0].id);else showEmpty();
       }
@@ -943,6 +1024,7 @@ tr:last-child td{border-bottom:0}
   }
 
   function hideAllViews(){
+    $("projects-view").hidden=true;
     $("admin").hidden=true;
     $("directory").hidden=true;
     $("editor").hidden=true;
@@ -956,6 +1038,154 @@ tr:last-child td{border-bottom:0}
       :"No entries yet. Hover the left navigation bar and choose “Create Entry” to write your first one.";
     $("none").hidden=false;
   }
+
+  /* Projects View & Admin Controls */
+  function resetProjectForm(){
+    $("proj-edit-id").value="";
+    $("proj-title").value="";
+    $("proj-phase").value="In Progress";
+    $("proj-desc").value="";
+    $("proj-form-heading").textContent="Add New Project";
+    $("proj-save").textContent="Publish Project";
+    $("proj-cancel").hidden=true;
+    $("perr").textContent="";
+  }
+
+  async function renderProjects(){
+    var list=$("proj-list"),projects=await getAllProjects();
+    list.innerHTML="";
+    if(!projects.length){
+      var emp=document.createElement("p");
+      emp.className="empty";
+      emp.textContent="No projects have been published yet.";
+      list.appendChild(emp);
+      return;
+    }
+
+    projects.forEach(function(p){
+      var card=document.createElement("article");
+      card.className="project-card";
+
+      var head=document.createElement("div");
+      head.className="project-head";
+
+      var title=document.createElement("h3");
+      title.className="project-title";
+      title.textContent=p.title;
+
+      var badgeWrap=document.createElement("div");
+      badgeWrap.style.cssText="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap";
+
+      var phaseBadge=document.createElement("span");
+      phaseBadge.className="badge "+(p.phase==="Completed"?"public":(p.phase==="Testing"?"gold":"admin"));
+      phaseBadge.textContent=p.phase;
+
+      var pubBadge=document.createElement("span");
+      pubBadge.className="badge public";
+      pubBadge.textContent="Public";
+
+      badgeWrap.append(phaseBadge,pubBadge);
+      head.append(title,badgeWrap);
+
+      var desc=document.createElement("p");
+      desc.className="project-desc";
+      desc.textContent=p.description;
+
+      var foot=document.createElement("div");
+      foot.className="project-foot";
+
+      var meta=document.createElement("span");
+      var dStr=new Date(p.updated).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+      meta.textContent="Published by "+p.created_by+" • Updated "+dStr;
+      foot.appendChild(meta);
+
+      if(myRole==="admin"){
+        var actions=document.createElement("div");
+        actions.style.cssText="display:flex;gap:.5rem";
+
+        var editBtn=document.createElement("button");
+        editBtn.className="btn ghost sm";
+        editBtn.textContent="Edit";
+        editBtn.onclick=function(){
+          $("proj-edit-id").value=p.id;
+          $("proj-title").value=p.title;
+          $("proj-phase").value=p.phase;
+          $("proj-desc").value=p.description;
+          $("proj-form-heading").textContent="Edit Project";
+          $("proj-save").textContent="Update Project";
+          $("proj-cancel").hidden=false;
+          $("perr").textContent="";
+          $("proj-title").focus();
+        };
+
+        var delBtn=document.createElement("button"),armedP=false;
+        delBtn.className="btn danger sm";
+        delBtn.textContent="Delete";
+        delBtn.onclick=async function(){
+          if(!armedP){
+            armedP=true;
+            delBtn.textContent="Confirm delete";
+            setTimeout(function(){armedP=false;if(delBtn)delBtn.textContent="Delete"},3000);
+            return;
+          }
+          await deleteProjectDb(p.id);
+          if($("proj-edit-id").value===p.id)resetProjectForm();
+          await renderProjects();
+        };
+
+        actions.append(editBtn,delBtn);
+        foot.appendChild(actions);
+      }
+
+      card.append(head,desc,foot);
+      list.appendChild(card);
+    });
+  }
+
+  $("nav-projects").onclick=async function(){
+    if(!guard())return;
+    hideAllViews();
+    updateNavHighlight("nav-projects");
+    resetProjectForm();
+    $("projects-view").hidden=false;
+    await renderProjects();
+  };
+
+  $("pback").onclick=async function(){
+    updateNavHighlight("nav-home");
+    var vis=await visibleEntries();
+    if(vis.length)await open(vis[0].id);else showEmpty();
+  };
+
+  $("proj-cancel").onclick=resetProjectForm;
+
+  $("proj-save").onclick=async function(){
+    if(myRole!=="admin")return;
+    var err=$("perr"),title=$("proj-title").value.trim(),phase=$("proj-phase").value,desc=$("proj-desc").value.trim();
+    err.style.color="";err.textContent="";
+    if(!title){err.textContent="Please enter a project title.";return}
+    if(!desc){err.textContent="Please enter a project description.";return}
+
+    $("proj-save").disabled=true;
+    try{
+      var editId=$("proj-edit-id").value;
+      var proj={
+        id:editId||("p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
+        title:title,
+        phase:phase,
+        description:desc,
+        created_by:me,
+        updated:Date.now()
+      };
+      await saveProjectDb(proj);
+      resetProjectForm();
+      err.style.color="var(--accent)";
+      err.textContent=editId?"Project updated.":"Project published publicly.";
+      await renderProjects();
+    }finally{
+      $("proj-save").disabled=false;
+    }
+  };
 
   async function renderList(){
     var q=$("q").value.trim().toLowerCase(),ul=$("list");
